@@ -5,7 +5,6 @@ import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.BuildableItem;
 import hudson.model.Hudson;
-import hudson.model.Job;
 import hudson.triggers.Trigger;
 
 import java.io.File;
@@ -66,7 +65,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
         public Runner(AbstractProject job, String triggerName, XTriggerLog log) {
             this.log = log;
-            this.job=job;
+            this.job = job;
             this.triggerName = triggerName;
         }
 
