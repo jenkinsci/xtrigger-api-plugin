@@ -2,7 +2,10 @@ package org.jenkinsci.lib.xtrigger;
 
 import antlr.ANTLRException;
 import hudson.Util;
+import hudson.model.AbstractProject;
 import hudson.model.BuildableItem;
+import hudson.model.Hudson;
+import hudson.model.Job;
 import hudson.triggers.Trigger;
 
 import java.io.File;
@@ -55,27 +58,33 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      */
     protected class Runner implements Runnable, Serializable {
 
+        private AbstractProject job;
+
         private XTriggerLog log;
 
         private String triggerName;
 
-        public Runner(XTriggerLog log, String triggerName) {
+        public Runner(AbstractProject job, String triggerName, XTriggerLog log) {
             this.log = log;
+            this.job=job;
             this.triggerName = triggerName;
         }
 
+        @Override
         public void run() {
 
             try {
-                long start = System.currentTimeMillis();
-                log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
-                boolean changed = checkIfModified(log);
-                log.info("\nPolling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start));
-                if (changed) {
-                    log.info("Changes found. Scheduling a build.");
-                    job.scheduleBuild(new XTriggerCause(triggerName, getCause()));
-                } else {
-                    log.info("No changes.");
+                if (!Hudson.getInstance().isQuietingDown() && (this.job).isBuildable()) {
+                    long start = System.currentTimeMillis();
+                    log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
+                    boolean changed = checkIfModified(log);
+                    log.info("\nPolling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start));
+                    if (changed) {
+                        log.info("Changes found. Scheduling a build.");
+                        job.scheduleBuild(new XTriggerCause(triggerName, getCause()));
+                    } else {
+                        log.info("No changes.");
+                    }
                 }
 
             } catch (XTriggerException e) {
