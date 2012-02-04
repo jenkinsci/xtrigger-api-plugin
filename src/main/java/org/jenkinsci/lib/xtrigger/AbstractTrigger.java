@@ -74,7 +74,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         start(launcherNode, project, newInstance, log);
     }
 
-    public abstract void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log);
+    protected abstract void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log);
 
     @SuppressWarnings("unused")
     protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
@@ -118,7 +118,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     /**
      * Asynchronous task
      */
-    protected class Runner implements Runnable, Serializable {
+    private class Runner implements Runnable, Serializable {
 
         private String triggerName;
 
@@ -133,13 +133,29 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         public void run() {
             try {
                 log.info("Polling for the job " + job.getName());
+
+                Node pollingNode = getPollingNode(log);
+                if (pollingNode == null) {
+                    log.info("Can't find any complete active node for the polling action. Maybe slaves are not yet active at this time or the number of executor of the master is 0. Checking again in next polling schedule.");
+                    return;
+                }
+
+                if (pollingNode.getRootPath() == null) {
+                    log.info("The running slave might be offline at the moment. Waiting for next schedule.");
+                    return;
+                }
+
+                displayPollingNode(pollingNode, log);
+
                 long start = System.currentTimeMillis();
                 log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
-                boolean changed = checkIfModified(log);
+                boolean changed = checkIfModified(pollingNode, log);
                 log.info("\nPolling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start) + ".");
+
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
-                    job.scheduleBuild(new XTriggerCause(triggerName, getCause()));
+                    AbstractProject project = (AbstractProject) job;
+                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause()), getScheduledActions(pollingNode, log));
                 } else {
                     log.info("No changes.");
                 }
@@ -153,22 +169,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
-    private boolean checkIfModified(XTriggerLog log) throws XTriggerException {
-        Node pollingNode = getPollingNode(log);
-        if (pollingNode == null) {
-            log.info("Can't find any complete active node for the polling action. Maybe slaves are not yet active at this time or the number of executor of the master is 0. Checking again in next polling schedule.");
-            return false;
-        }
-
-        if (pollingNode.getRootPath() == null) {
-            log.info("The running slave might be offline at the moment. Waiting for next schedule.");
-            return false;
-        }
-
-        displayPollingNode(pollingNode, log);
-
-        return checkIfModified(pollingNode, log);
-    }
+    protected abstract Action[] getScheduledActions(Node pollingNode, XTriggerLog log);
 
     /**
      * Checks if the new folder content has been modified
