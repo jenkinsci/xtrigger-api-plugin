@@ -5,6 +5,7 @@ import hudson.FilePath;
 import hudson.Util;
 import hudson.model.*;
 import hudson.triggers.Trigger;
+import hudson.util.NullStream;
 import hudson.util.StreamTaskListener;
 import org.jenkinsci.lib.envinject.EnvInjectException;
 import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
@@ -24,6 +25,8 @@ import java.util.logging.Logger;
 public abstract class AbstractTrigger extends Trigger<BuildableItem> implements Serializable {
 
     private static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
+
+    protected transient boolean offlineSlaveOnStartup = false;
 
     /**
      * Builds a trigger object
@@ -50,14 +53,30 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      */
     protected abstract boolean requiresWorkspaceForPolling();
 
-    /**
-     * Checks if the new folder content has been modified
-     * The date time and the content file are used.
-     *
-     * @return true if the new folder content has been modified
-     */
-    protected abstract boolean checkIfModified(XTriggerLog log) throws XTriggerException;
 
+    @Override
+    public void start(BuildableItem project, boolean newInstance) {
+        super.start(project, newInstance);
+
+        XTriggerLog log = new XTriggerLog(new StreamTaskListener(new NullStream()));
+        Node launcherNode = getPollingNode(log);
+        if (launcherNode == null) {
+            log.info("Can't find any complete active node. Checking again in next polling schedule.");
+            offlineSlaveOnStartup = true;
+            return;
+        }
+        if (launcherNode.getRootPath() == null) {
+            log.info("The running slave might be offline at the moment. Waiting for next schedule.");
+            offlineSlaveOnStartup = true;
+            return;
+        }
+
+        start(launcherNode, project, newInstance, log);
+    }
+
+    public abstract void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log);
+
+    @SuppressWarnings("unused")
     protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
         EnvVarsResolver varsResolver = new EnvVarsResolver();
         Map<String, String> envVars;
@@ -134,6 +153,31 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
+    private boolean checkIfModified(XTriggerLog log) throws XTriggerException {
+        Node pollingNode = getPollingNode(log);
+        if (pollingNode == null) {
+            log.info("Can't find any complete active node for the polling action. Maybe slaves are not yet active at this time or the number of executor of the master is 0. Checking again in next polling schedule.");
+            return false;
+        }
+
+        if (pollingNode.getRootPath() == null) {
+            log.info("The running slave might be offline at the moment. Waiting for next schedule.");
+            return false;
+        }
+
+        displayPollingNode(pollingNode, log);
+
+        return checkIfModified(pollingNode, log);
+    }
+
+    /**
+     * Checks if the new folder content has been modified
+     * The date time and the content file are used.
+     *
+     * @return true if the new folder content has been modified
+     */
+    protected abstract boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException;
+
     /**
      * Gets the trigger cause
      *
@@ -149,19 +193,30 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * @param log
      * @return the node; null if there is no available node
      */
-    protected Node getPollingNode(XTriggerLog log) {
+    private Node getPollingNode(XTriggerLog log) {
         List<Node> nodes = getPollingNodeListWithExecutors(log);
         if (nodes == null || nodes.size() == 0) {
             return null;
         }
+        //Get the first eligible node
         return nodes.get(0);
     }
 
-    protected List<Node> getPollingNodeListWithExecutors(XTriggerLog log) {
+    private void displayPollingNode(Node node, XTriggerLog log) {
+        assert node != null;
+        String nodeName = node.getNodeName();
+        if (nodeName == null || nodeName.trim().length() == 0) {
+            log.info("Polling on master.");
+        } else {
+            log.info("Polling remotely on " + nodeName);
+        }
+    }
+
+    private List<Node> getPollingNodeListWithExecutors(XTriggerLog log) {
         List<Node> result = new ArrayList<Node>();
         List<Node> nodes = getPollingNodeList(log);
         for (Node node : nodes) {
-            if (eligibleNode(node)) {
+            if (node != null && eligibleNode(node)) {
                 result.add(node);
             }
         }
@@ -181,6 +236,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private boolean eligibleNode(Node node) {
+        if (node == null) {
+            return false;
+        }
+
+        if (node.getRootPath() == null) {
+            return false;
+        }
+
         return node.getNumExecutors() != 0;
     }
 
@@ -188,8 +251,12 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         AbstractProject p = (AbstractProject) job;
         Label label = p.getAssignedLabel();
         if (label == null) {
-            log.info("Polling on master.");
-            return Arrays.asList(getMasterNode());
+            AbstractProject project = (AbstractProject) job;
+            Node lastBuildOnNode = project.getLastBuiltOn();
+            if (lastBuildOnNode == null) {
+                return Arrays.asList(getMasterNode());
+            }
+            return Arrays.asList(lastBuildOnNode);
         } else {
             log.info(String.format("Searching a node to run the polling for the label '%s'.", label));
             return getNodesLabel(p, label);
