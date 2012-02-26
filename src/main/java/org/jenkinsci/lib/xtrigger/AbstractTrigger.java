@@ -7,10 +7,12 @@ import hudson.model.*;
 import hudson.triggers.Trigger;
 import hudson.util.NullStream;
 import hudson.util.StreamTaskListener;
+import org.apache.commons.io.FileUtils;
 import org.jenkinsci.lib.envinject.EnvInjectException;
 import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.*;
@@ -18,13 +20,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * @author Gregory Boissinot
  */
 public abstract class AbstractTrigger extends Trigger<BuildableItem> implements Serializable {
 
-    private static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
+    protected static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
 
     protected transient boolean offlineSlaveOnStartup = false;
 
@@ -33,7 +34,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * Calls an implementation trigger
      *
      * @param cronTabSpec the scheduler value
-     * @throws ANTLRException
+     * @throws antlr.ANTLRException
      */
     public AbstractTrigger(String cronTabSpec) throws ANTLRException {
         super(cronTabSpec);
@@ -53,28 +54,38 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      */
     protected abstract boolean requiresWorkspaceForPolling();
 
-
     @Override
     public void start(BuildableItem project, boolean newInstance) {
         super.start(project, newInstance);
 
         XTriggerLog log = new XTriggerLog(new StreamTaskListener(new NullStream()));
-        Node launcherNode = getPollingNode(log);
-        if (launcherNode == null) {
-            log.info("Can't find any complete active node. Checking again in next polling schedule.");
-            offlineSlaveOnStartup = true;
-            return;
-        }
-        if (launcherNode.getRootPath() == null) {
-            log.info("The running slave might be offline at the moment. Waiting for next schedule.");
+        Node pollingNode = getPollingNode(log);
+        if (pollingNode == null) {
+            log.info("Can't find any complete active node.");
+            log.info("Checking again in next polling schedule.");
             offlineSlaveOnStartup = true;
             return;
         }
 
-        start(launcherNode, project, newInstance, log);
+        if (pollingNode.getRootPath() == null) {
+            log.info("The running slave might be offline at the moment.");
+            log.info("Waiting for next schedule.");
+            offlineSlaveOnStartup = true;
+            return;
+        }
+
+        try {
+            start(pollingNode, project, newInstance, log);
+        } catch (XTriggerException xe) {
+            LOGGER.log(Level.SEVERE, "Can't initialize trigger", xe);
+        }
     }
 
-    protected abstract void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log);
+    /**
+     * Can be overridden if needed
+     */
+    protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
+    }
 
     @SuppressWarnings("unused")
     protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
@@ -90,19 +101,23 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     @Override
     public void run() {
+        AbstractProject project = (AbstractProject) job;
         XTriggerDescriptor descriptor = getDescriptor();
         ExecutorService executorService = descriptor.getExecutor();
         StreamTaskListener listener;
         try {
             listener = new StreamTaskListener(getLogFile());
             XTriggerLog log = new XTriggerLog(listener);
-            if (!Hudson.getInstance().isQuietingDown() && ((AbstractProject) job).isBuildable()) {
+            if (Hudson.getInstance().isQuietingDown()) {
+                log.info("Jenkins is quieting down.");
+            } else if (!project.isBuildable()) {
+                log.info("The job is not buildable. Activate it to poll again.");
+            } else if (project.isBuilding()) {
+                log.info("The job is building. Waiting for next poll.");
+            } else {
                 Runner runner = new Runner(getName(), log);
                 executorService.execute(runner);
-            } else {
-                log.info("Jenkins is quieting down or the job is not buildable.");
             }
-
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
             t.printStackTrace();
@@ -131,31 +146,37 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
         @Override
         public void run() {
+
+            long start = System.currentTimeMillis();
+            log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
+            log.info("Polling for the job " + job.getName());
+
             try {
-                log.info("Polling for the job " + job.getName());
 
                 Node pollingNode = getPollingNode(log);
                 if (pollingNode == null) {
-                    log.info("Can't find any complete active node for the polling action. Maybe slaves are not yet active at this time or the number of executor of the master is 0. Checking again in next polling schedule.");
+                    log.info("Can't find any complete active node for the polling action.");
+                    log.info("Maybe slaves are not yet active at this time or the number of executor of the master is 0.");
+                    log.info("Checking again in next polling schedule.");
                     return;
                 }
 
                 if (pollingNode.getRootPath() == null) {
-                    log.info("The running slave might be offline at the moment. Waiting for next schedule.");
+                    log.info("The running slave might be offline at the moment.");
+                    log.info("Waiting for next schedule.");
                     return;
                 }
 
                 displayPollingNode(pollingNode, log);
 
-                long start = System.currentTimeMillis();
-                log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
+                //Check if there are modifications in the environment
                 boolean changed = checkIfModified(pollingNode, log);
                 log.info("\nPolling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start) + ".");
 
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
                     AbstractProject project = (AbstractProject) job;
-                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause()), getScheduledActions(pollingNode, log));
+                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true), getScheduledXTriggerActions(pollingNode, log));
                 } else {
                     log.info("No changes.");
                 }
@@ -169,13 +190,27 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
+    protected Action[] getScheduledXTriggerActions(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        Action[] actions = getScheduledActions(pollingNode, log);
+        int nbNewAction = actions.length + 1;
+        Action[] newActions = new Action[nbNewAction];
+        for (int i = 0; i < actions.length; i++) {
+            newActions[i] = actions[i];
+        }
+        try {
+            newActions[newActions.length - 1] = new XTriggerCauseAction(FileUtils.readFileToString(getLogFile()));
+        } catch (IOException ioe) {
+            throw new XTriggerException(ioe);
+        }
+        return newActions;
+    }
+
     protected abstract Action[] getScheduledActions(Node pollingNode, XTriggerLog log);
 
     /**
-     * Checks if the new folder content has been modified
-     * The date time and the content file are used.
+     * Checks if there are modifications in the environment between last poll
      *
-     * @return true if the new folder content has been modified
+     * @return true if there are modifications
      */
     protected abstract boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException;
 
