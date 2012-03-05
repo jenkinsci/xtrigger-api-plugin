@@ -27,6 +27,8 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     protected static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
 
+    private String triggerLabel;
+
     protected transient boolean offlineSlaveOnStartup = false;
 
     /**
@@ -38,6 +40,25 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      */
     public AbstractTrigger(String cronTabSpec) throws ANTLRException {
         super(cronTabSpec);
+    }
+
+    /**
+     * Builds a trigger object
+     * Calls an implementation trigger
+     *
+     * @param cronTabSpec  the scheduler value
+     * @param triggerLabel the trigger label to restrictbox where the poll to run
+     * @throws antlr.ANTLRException
+     */
+
+    public AbstractTrigger(String cronTabSpec, String triggerLabel) throws ANTLRException {
+        super(cronTabSpec);
+        this.triggerLabel = Util.fixEmpty(triggerLabel);
+    }
+
+    @SuppressWarnings("unused")
+    public String getTriggerLabel() {
+        return triggerLabel;
     }
 
     /**
@@ -260,15 +281,57 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodeList(XTriggerLog log) {
+        log.info("Looking nodes where the polling can be run.");
+
+        List<Node> nodes;
         if (requiresWorkspaceForPolling()) {
-            AbstractProject project = (AbstractProject) job;
-            Node lastBuildOnNode = project.getLastBuiltOn();
-            if (lastBuildOnNode == null) {
-                return candidatePollingNode(log);
-            }
-            return Arrays.asList(lastBuildOnNode);
+            nodes = getPollingNodeListRequiredWS(log);
+        } else {
+            nodes = getPollingNodeListRequiredNoWS(log);
         }
+
+        if (nodes == null || nodes.size() == 0) {
+            log.info("Trying to poll on master node.");
+            nodes = Arrays.asList(getMasterNode());
+        }
+
+        return nodes;
+    }
+
+    private List<Node> getPollingNodeListRequiredNoWS(XTriggerLog log) {
+        log.info("Poll doesn't requires a workspace.");
+
+        AbstractProject project = (AbstractProject) job;
+
+        //The specified trigger node must be considered first
+        if (triggerLabel != null) {
+            log.info(String.format("Looking for a polling node to the restricted label %s.", triggerLabel));
+            Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
+            return getNodesLabel(project, targetLabel);
+        }
+
         return candidatePollingNode(log);
+    }
+
+    private List<Node> getPollingNodeListRequiredWS(XTriggerLog log) {
+        log.info("Poll requires a workspace.");
+
+        AbstractProject project = (AbstractProject) job;
+
+        //The specified trigger node must be considered first
+        if (triggerLabel != null) {
+            log.info(String.format("Looking for a polling node to the restricted label %s.", triggerLabel));
+            Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
+            return getNodesLabel(project, targetLabel);
+        }
+
+        //Search for the last built on
+        log.info("Looking for the last built on node.");
+        Node lastBuildOnNode = project.getLastBuiltOn();
+        if (lastBuildOnNode == null) {
+            return getPollingNodeNoPreviousBuild(log);
+        }
+        return Arrays.asList(lastBuildOnNode);
     }
 
     private boolean eligibleNode(Node node) {
@@ -283,20 +346,45 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         return node.getNumExecutors() != 0;
     }
 
+    private List<Node> getPollingNodeNoPreviousBuild(XTriggerLog log) {
+        AbstractProject project = (AbstractProject) job;
+        Label targetLabel = getTargetLabel(log);
+        if (targetLabel != null) {
+            return getNodesLabel(project, targetLabel);
+        }
+        return null;
+    }
+
     private List<Node> candidatePollingNode(XTriggerLog log) {
-        AbstractProject p = (AbstractProject) job;
-        Label label = p.getAssignedLabel();
-        if (label == null) {
-            AbstractProject project = (AbstractProject) job;
+        log.info("Looking for a candidate node to run the poll.");
+        AbstractProject project = (AbstractProject) job;
+        Label targetLabel = getTargetLabel(log);
+        if (targetLabel != null) {
+            return getNodesLabel(project, targetLabel);
+        } else {
+            log.info("Looking for a polling node with no predefined label.");
+            log.info("Trying to poll with the last built on node.");
             Node lastBuildOnNode = project.getLastBuiltOn();
             if (lastBuildOnNode == null) {
+                log.info("Trying to poll on master node.");
                 return Arrays.asList(getMasterNode());
             }
             return Arrays.asList(lastBuildOnNode);
-        } else {
-            log.info(String.format("Searching a node to run the polling for the label '%s'.", label));
-            return getNodesLabel(p, label);
         }
+    }
+
+    /**
+     * Returns the label if any to poll
+     */
+    private Label getTargetLabel(XTriggerLog log) {
+        AbstractProject p = (AbstractProject) job;
+        Label assignedLabel = p.getAssignedLabel();
+        if (assignedLabel != null) {
+            log.info(String.format("Looking for a polling node with the assigned project label %s.", assignedLabel));
+            return assignedLabel;
+        }
+
+        return null;
     }
 
     private Node getMasterNode() {
