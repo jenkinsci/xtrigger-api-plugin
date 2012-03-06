@@ -299,7 +299,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodeListRequiredNoWS(XTriggerLog log) {
-        log.info("Poll doesn't requires a workspace.");
 
         AbstractProject project = (AbstractProject) job;
 
@@ -314,7 +313,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodeListRequiredWS(XTriggerLog log) {
-        log.info("Poll requires a workspace.");
 
         AbstractProject project = (AbstractProject) job;
 

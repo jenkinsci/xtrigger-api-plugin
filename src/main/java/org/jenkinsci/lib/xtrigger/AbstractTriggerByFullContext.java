@@ -28,8 +28,12 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      */
     @Override
     protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
-        context = getContext(pollingNode, log);
+        if (isContextOnStartupFetched()) {
+            context = getContext(pollingNode, log);
+        }
     }
+
+    public abstract boolean isContextOnStartupFetched();
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
@@ -40,6 +44,12 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
             log.info("Slave(s) were offline at startup or at previous poll.");
             log.info("Recording environment context and waiting for next schedule to check if there are modifications.");
             offlineSlaveOnStartup = false;
+            setNewContext(newContext);
+            return false;
+        }
+
+        if (context == null) {
+            log.info("Recording context. Check changes in next poll.");
             setNewContext(newContext);
             return false;
         }
