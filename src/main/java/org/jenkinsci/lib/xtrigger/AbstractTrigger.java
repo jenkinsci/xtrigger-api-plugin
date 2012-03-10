@@ -263,9 +263,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         assert node != null;
         String nodeName = node.getNodeName();
         if (nodeName == null || nodeName.trim().length() == 0) {
-            log.info("Polling on master.");
+            log.info("\nPolling on master.");
         } else {
-            log.info("Polling remotely on " + nodeName);
+            log.info("\nPolling remotely on " + nodeName);
         }
     }
 
@@ -281,7 +281,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodeList(XTriggerLog log) {
-        log.info("Looking nodes where the polling can be run.");
+        log.info("Looking nodes where the poll can be run.");
 
         List<Node> nodes;
         if (requiresWorkspaceForPolling()) {
@@ -304,7 +304,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
-            log.info(String.format("Looking for a polling node to the restricted label %s.", triggerLabel));
+            log.info(String.format("Looking for a node to the restricted label %s.", triggerLabel));
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
             return getNodesLabel(project, targetLabel);
         }
@@ -360,7 +360,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         if (targetLabel != null) {
             return getNodesLabel(project, targetLabel);
         } else {
-            log.info("Looking for a polling node with no predefined label.");
+            log.info("Looking for a node with no predefined label.");
             log.info("Trying to poll with the last built on node.");
             Node lastBuildOnNode = project.getLastBuiltOn();
             if (lastBuildOnNode == null) {

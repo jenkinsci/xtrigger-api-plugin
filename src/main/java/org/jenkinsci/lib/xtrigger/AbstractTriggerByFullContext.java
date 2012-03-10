@@ -41,7 +41,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
         C newContext = getContext(pollingNode, log);
 
         if (offlineSlaveOnStartup) {
-            log.info("Slave(s) were offline at startup or at previous poll.");
+            log.info("No nodes were available at startup or at previous poll.");
             log.info("Recording environment context and waiting for next schedule to check if there are modifications.");
             offlineSlaveOnStartup = false;
             setNewContext(newContext);
