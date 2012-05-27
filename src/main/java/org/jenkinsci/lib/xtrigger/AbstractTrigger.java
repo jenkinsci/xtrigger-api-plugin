@@ -29,31 +29,29 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     private String triggerLabel;
 
+    private transient boolean unblockConcurrentBuild;
     protected transient boolean offlineSlaveOnStartup = false;
 
-    /**
-     * Builds a trigger object
-     * Calls an implementation trigger
-     *
-     * @param cronTabSpec the scheduler value
-     * @throws antlr.ANTLRException
-     */
     public AbstractTrigger(String cronTabSpec) throws ANTLRException {
         super(cronTabSpec);
+        this.unblockConcurrentBuild = false;
     }
 
-    /**
-     * Builds a trigger object
-     * Calls an implementation trigger
-     *
-     * @param cronTabSpec  the scheduler value
-     * @param triggerLabel the trigger label to restrictbox where the poll to run
-     * @throws antlr.ANTLRException
-     */
+    protected AbstractTrigger(String cronTabSpec, boolean unblockConcurrentBuild) throws ANTLRException {
+        super(cronTabSpec);
+        this.unblockConcurrentBuild = unblockConcurrentBuild;
+    }
 
-    public AbstractTrigger(String cronTabSpec, String triggerLabel) throws ANTLRException {
+    protected AbstractTrigger(String cronTabSpec, String triggerLabel) throws ANTLRException {
         super(cronTabSpec);
         this.triggerLabel = Util.fixEmpty(triggerLabel);
+        this.unblockConcurrentBuild = false;
+    }
+
+    protected AbstractTrigger(String cronTabSpec, String triggerLabel, boolean unblockConcurrentBuild) throws ANTLRException {
+        super(cronTabSpec);
+        this.triggerLabel = triggerLabel;
+        this.unblockConcurrentBuild = unblockConcurrentBuild;
     }
 
     @SuppressWarnings("unused")
@@ -133,7 +131,8 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 log.info("Jenkins is quieting down.");
             } else if (!project.isBuildable()) {
                 log.info("The job is not buildable. Activate it to poll again.");
-            } else if (project.isBuilding()) {
+
+            } else if (!unblockConcurrentBuild && project.isBuilding()) {
                 log.info("The job is building. Waiting for next poll.");
             } else {
                 Runner runner = new Runner(getName(), log);
