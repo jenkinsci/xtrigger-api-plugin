@@ -1,8 +1,10 @@
 package org.jenkinsci.lib.xtrigger;
 
+import hudson.console.HyperlinkNote;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
 import hudson.model.Hudson;
+import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import org.apache.commons.io.FileUtils;
 
@@ -69,6 +71,17 @@ public class XTriggerCause extends Cause {
             return String.format("[%s] %s (%s)", triggerName, causeFrom, "<a href=\"triggerCauseAction\">log</a>");
         }
     }
+
+    public void print(TaskListener listener) {
+        if (causeFrom == null) {
+            listener.getLogger().println( "[" + triggerName + "]" );
+        } else {
+            listener.getLogger().println( String.format("[%s] %s (%s)", triggerName, causeFrom, 
+                HyperlinkNote.encodeTo("triggerCauseAction", "log")) );
+        }
+    }
+    
+
 
     @SuppressWarnings("unused")
     public String getTriggerName() {
