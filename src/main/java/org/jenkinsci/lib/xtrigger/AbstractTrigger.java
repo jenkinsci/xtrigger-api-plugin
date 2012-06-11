@@ -123,24 +123,27 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         AbstractProject project = (AbstractProject) job;
         XTriggerDescriptor descriptor = getDescriptor();
         ExecutorService executorService = descriptor.getExecutor();
-        StreamTaskListener listener;
+        XTriggerLog log = null;
         try {
-            listener = new StreamTaskListener(getLogFile());
-            XTriggerLog log = new XTriggerLog(listener);
+            StreamTaskListener listener = new StreamTaskListener(getLogFile());
+            log = new XTriggerLog(listener);
             if (Hudson.getInstance().isQuietingDown()) {
                 log.info("Jenkins is quieting down.");
             } else if (!project.isBuildable()) {
                 log.info("The job is not buildable. Activate it to poll again.");
-
             } else if (!unblockConcurrentBuild && project.isBuilding()) {
                 log.info("The job is building. Waiting for next poll.");
             } else {
-                Runner runner = new Runner(getName(), log);
+                Runner runner = new Runner(getName());
                 executorService.execute(runner);
             }
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
             t.printStackTrace();
+        } finally {
+            if (log != null) {
+                log.closeQuietly();
+            }
         }
     }
 
@@ -157,21 +160,22 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
         private String triggerName;
 
-        private XTriggerLog log;
-
-        public Runner(String triggerName, XTriggerLog log) {
+        public Runner(String triggerName) {
             this.triggerName = triggerName;
-            this.log = log;
         }
 
         @Override
         public void run() {
-
-            long start = System.currentTimeMillis();
-            log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
-            log.info("Polling for the job " + job.getName());
-
+            XTriggerLog log = null;
             try {
+
+                StreamTaskListener listener = new StreamTaskListener(getLogFile());
+                log = new XTriggerLog(listener);
+
+                long start = System.currentTimeMillis();
+                log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
+                log.info("Polling for the job " + job.getName());
+
 
                 Node pollingNode = getPollingNode(log);
                 if (pollingNode == null) {
@@ -205,7 +209,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             } catch (Throwable e) {
                 log.error("SEVERE - Polling error " + e.getMessage());
             } finally {
-                log.closeQuietly();
+                if (log != null) {
+                    log.closeQuietly();
+                }
             }
         }
     }
