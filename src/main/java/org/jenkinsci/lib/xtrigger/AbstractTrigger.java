@@ -50,7 +50,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     protected AbstractTrigger(String cronTabSpec, String triggerLabel, boolean unblockConcurrentBuild) throws ANTLRException {
         super(cronTabSpec);
-        this.triggerLabel = triggerLabel;
+        this.triggerLabel = Util.fixEmpty(triggerLabel);
         this.unblockConcurrentBuild = unblockConcurrentBuild;
     }
 
@@ -250,13 +250,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     /**
      * Get the node where the polling need to be done
      * <p/>
-     * The returned node must have a number of executor different of 0.
+     * The returned node has a number of executor different of 0.
      *
      * @param log
      * @return the node; null if there is no available node
      */
     private Node getPollingNode(XTriggerLog log) {
-        List<Node> nodes = getPollingNodeListWithExecutors(log);
+        List<Node> nodes = getPollingNodesWithExecutors(log);
         if (nodes == null || nodes.size() == 0) {
             return null;
         }
@@ -274,12 +274,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
-    private List<Node> getPollingNodeListWithExecutors(XTriggerLog log) {
+    private List<Node> getPollingNodesWithExecutors(XTriggerLog log) {
         List<Node> result = new ArrayList<Node>();
         List<Node> nodes = getPollingNodeList(log);
         for (Node node : nodes) {
             if (node != null && eligibleNode(node)) {
                 result.add(node);
+            } else if (node != null) {
+                log.info(String.format("Finding %s but it is not eligible.", node.getDisplayName()));
             }
         }
         return result;
@@ -296,6 +298,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
 
         if (nodes == null || nodes.size() == 0) {
+            log.info("Can't find any eligible nodes.");
             log.info("Trying to poll on master node.");
             nodes = Arrays.asList(getMasterNode());
         }
@@ -361,6 +364,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     private List<Node> candidatePollingNode(XTriggerLog log) {
         log.info("Looking for a candidate node to run the poll.");
         AbstractProject project = (AbstractProject) job;
+
         Label targetLabel = getTargetLabel(log);
         if (targetLabel != null) {
             return getNodesLabel(project, targetLabel);
@@ -383,7 +387,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         AbstractProject p = (AbstractProject) job;
         Label assignedLabel = p.getAssignedLabel();
         if (assignedLabel != null) {
-            log.info(String.format("Looking for a polling node with the assigned project label %s.", assignedLabel));
+            log.info(String.format("Trying to find an eligible node with the assigned project label %s.", assignedLabel));
             return assignedLabel;
         }
 
