@@ -206,8 +206,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 }
             } catch (XTriggerException e) {
                 log.error("Polling error " + e.getMessage());
+                e.printStackTrace();
             } catch (Throwable e) {
                 log.error("SEVERE - Polling error " + e.getMessage());
+                e.printStackTrace();
             } finally {
                 if (log != null) {
                     log.closeQuietly();
