@@ -138,7 +138,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 executorService.execute(runner);
             }
         } catch (Throwable t) {
-            LOGGER.log(Level.SEVERE, "Severe Error during the trigger execution " + t.getMessage());
+            LOGGER.log(Level.SEVERE, "Severe error during the trigger execution " + t.getMessage());
             t.printStackTrace();
         } finally {
             if (log != null) {
@@ -205,17 +205,29 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                     log.info("No changes.");
                 }
             } catch (XTriggerException e) {
-                log.error("Polling error " + e.getMessage());
-                e.printStackTrace();
+                reportError(log, e);
             } catch (Throwable e) {
-                log.error("SEVERE - Polling error " + e.getMessage());
-                e.printStackTrace();
+                reportError(log, e);
             } finally {
                 if (log != null) {
                     log.closeQuietly();
                 }
             }
         }
+    }
+
+    private void reportError(XTriggerLog log, Throwable e) {
+        log.error("Polling error...");
+        String message = e.getMessage();
+        if (message != null) {
+            log.error("Error message: " + message);
+        }
+        Throwable cause = e.getCause();
+        if (cause != null) {
+            log.error("Error cause: " + cause.getMessage());
+            cause.printStackTrace();
+        }
+        e.printStackTrace();
     }
 
     protected Action[] getScheduledXTriggerActions(Node pollingNode, XTriggerLog log) throws XTriggerException {
