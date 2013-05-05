@@ -23,6 +23,18 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
         super(cronTabSpec);
     }
 
+    protected AbstractTriggerByFullContext(String cronTabSpec, boolean unblockConcurrentBuild) throws ANTLRException {
+        super(cronTabSpec, unblockConcurrentBuild);
+    }
+
+    protected AbstractTriggerByFullContext(String cronTabSpec, String triggerLabel) throws ANTLRException {
+        super(cronTabSpec, triggerLabel);
+    }
+
+    protected AbstractTriggerByFullContext(String cronTabSpec, String triggerLabel, boolean unblockConcurrentBuild) throws ANTLRException {
+        super(cronTabSpec, triggerLabel, unblockConcurrentBuild);
+    }
+
     /**
      * Can be overridden if needed
      */
