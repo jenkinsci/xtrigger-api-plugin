@@ -82,6 +82,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         if (pollingNode == null) {
             log.info("Can't find any complete active node.");
             log.info("Checking again in next polling schedule.");
+            log.info("Waiting for next schedule.");
             offlineSlaveOnStartup = true;
             return;
         }
@@ -312,7 +313,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
 
         if (nodes == null || nodes.size() == 0) {
-            log.info("Can't find any eligible nodes.");
+            log.info("Can't find any eligible slave nodes.");
             log.info("Trying to poll on master node.");
             nodes = Arrays.asList(getMasterNode());
         }
@@ -327,6 +328,12 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
             log.info(String.format("Looking for a node to the restricted label %s.", triggerLabel));
+
+            if ("master".equalsIgnoreCase(triggerLabel)) {
+                log.info("Restrict on master label. Polling on master.");
+                return Arrays.asList(getMasterNode());
+            }
+
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
             return getNodesLabel(project, targetLabel);
         }
@@ -340,7 +347,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
+
             log.info(String.format("Looking for a polling node to the restricted label %s.", triggerLabel));
+
+            if ("master".equalsIgnoreCase(triggerLabel)) {
+                log.info("Polling on master.");
+                return Arrays.asList(getMasterNode());
+            }
+
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
             return getNodesLabel(project, targetLabel);
         }
