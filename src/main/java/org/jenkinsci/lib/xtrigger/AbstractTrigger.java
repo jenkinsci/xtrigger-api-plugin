@@ -215,6 +215,24 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 }
             }
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Runner runner = (Runner) o;
+
+            if (triggerName != null ? !triggerName.equals(runner.triggerName) : runner.triggerName != null)
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return triggerName != null ? triggerName.hashCode() : 0;
+        }
     }
 
     private void reportError(XTriggerLog log, Throwable e) {
