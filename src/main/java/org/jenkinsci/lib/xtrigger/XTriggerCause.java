@@ -26,6 +26,12 @@ public class XTriggerCause extends Cause {
 
     private boolean logEnabled;
 
+    protected XTriggerCause(String triggerName, String causeFrom) {
+        this.triggerName = triggerName;
+        this.causeFrom = causeFrom;
+        this.logEnabled = false;
+    }
+
     protected XTriggerCause(String triggerName, String causeFrom, boolean logEnabled) {
         this.triggerName = triggerName;
         this.causeFrom = causeFrom;
@@ -74,13 +80,12 @@ public class XTriggerCause extends Cause {
 
     public void print(TaskListener listener) {
         if (causeFrom == null) {
-            listener.getLogger().println( "[" + triggerName + "]" );
+            listener.getLogger().println("[" + triggerName + "]");
         } else {
-            listener.getLogger().println( String.format("[%s] %s (%s)", triggerName, causeFrom, 
-                HyperlinkNote.encodeTo("triggerCauseAction", "log")) );
+            listener.getLogger().println(String.format("[%s] %s (%s)", triggerName, causeFrom,
+                    HyperlinkNote.encodeTo("triggerCauseAction", "log")));
         }
     }
-    
 
 
     @SuppressWarnings("unused")
