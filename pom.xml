@@ -10,7 +10,7 @@
 
     <groupId>org.jenkins-ci.lib</groupId>
     <artifactId>xtrigger-lib</artifactId>
-    <version>0.26-SNAPSHOT</version>
+    <version>0.26</version>
     <packaging>jar</packaging>
     <name>Jenkins XTrigger Library</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/XTrigger+Plugin</url>
