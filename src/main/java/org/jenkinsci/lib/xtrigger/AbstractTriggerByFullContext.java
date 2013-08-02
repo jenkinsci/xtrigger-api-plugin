@@ -71,12 +71,44 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
         return changed;
     }
 
+    @Override
+    protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
+        C newContext = getContext(log);
+
+        if (context == null) {
+            log.info("Recording context. Check changes in next poll.");
+            setNewContext(newContext);
+            return false;
+        }
+
+        boolean changed = checkIfModified(context, newContext, log);
+        setNewContext(newContext);
+        return changed;
+    }
 
     private void setNewContext(C context) {
         this.context = context;
     }
 
-    protected abstract C getContext(Node pollingNode, XTriggerLog log) throws XTriggerException;
+    /**
+     * Captures the context
+     * This method is alternative to getContext(XTriggerLog log)
+     * It must be overridden
+     * from 0.26
+     */
+    protected C getContext(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        return null;
+    }
+
+    /**
+     * Captures the context
+     * This method is alternative to getContext(Node pollingNode, XTriggerLog log)
+     * It must be overridden
+     * from 0.26
+     */
+    protected C getContext(XTriggerLog log) throws XTriggerException {
+        return null;
+    }
 
     /**
      * Checks if there are modifications in the environment between last poll

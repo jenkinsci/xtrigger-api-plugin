@@ -177,31 +177,38 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
                 log.info("Polling for the job " + job.getName());
 
+                boolean changed;
 
-                Node pollingNode = getPollingNode(log);
-                if (pollingNode == null) {
-                    log.info("Can't find any complete active node for the polling action.");
-                    log.info("Maybe slaves are not yet active at this time or the number of executor of the master is 0.");
-                    log.info("Checking again in next polling schedule.");
-                    return;
+                if (requirePollingNode()) {
+
+                    Node pollingNode = getPollingNode(log);
+                    if (pollingNode == null) {
+                        log.info("Can't find any complete active node for the polling action.");
+                        log.info("Maybe slaves are not yet active at this time or the number of executor of the master is 0.");
+                        log.info("Checking again in next polling schedule.");
+                        return;
+                    }
+
+                    if (pollingNode.getRootPath() == null) {
+                        log.info("The running slave might be offline at the moment.");
+                        log.info("Waiting for next schedule.");
+                        return;
+                    }
+
+                    displayPollingNode(pollingNode, log);
+                    changed = checkIfModified(pollingNode, log);
+
+                } else {
+                    changed = checkIfModified(log);
                 }
 
-                if (pollingNode.getRootPath() == null) {
-                    log.info("The running slave might be offline at the moment.");
-                    log.info("Waiting for next schedule.");
-                    return;
-                }
 
-                displayPollingNode(pollingNode, log);
-
-                //Check if there are modifications in the environment
-                boolean changed = checkIfModified(pollingNode, log);
                 log.info("\nPolling complete. Took " + Util.getTimeSpanString(System.currentTimeMillis() - start) + ".");
 
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
                     AbstractProject project = (AbstractProject) job;
-                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true), getScheduledXTriggerActions(pollingNode, log));
+                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true), getScheduledXTriggerActions(null, log));
                 } else {
                     log.info("No changes.");
                 }
@@ -234,6 +241,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             return triggerName != null ? triggerName.hashCode() : 0;
         }
     }
+
 
     private void reportError(XTriggerLog log, Throwable e) {
         log.error("Polling error...");
@@ -272,6 +280,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * @return true if there are modifications
      */
     protected abstract boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException;
+
+    protected boolean requirePollingNode() {
+        return true;
+    }
+
+    protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
+        return true;
+    }
 
     /**
      * Gets the trigger cause
