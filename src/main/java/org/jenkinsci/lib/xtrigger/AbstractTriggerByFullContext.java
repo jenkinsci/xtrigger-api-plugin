@@ -17,7 +17,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * Calls an implementation trigger
      *
      * @param cronTabSpec the scheduler value
-     * @throws ANTLRException
+     * @throws ANTLRException the expression language expression
      */
     public AbstractTriggerByFullContext(String cronTabSpec) throws ANTLRException {
         super(cronTabSpec);
@@ -88,6 +88,15 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     private void setNewContext(C context) {
         this.context = context;
+    }
+
+    /**
+     * Resets the current context to the old context
+     *
+     * @param oldContext the previous context
+     */
+    public void resetOldContext(C oldContext) {
+        this.context = oldContext;
     }
 
     /**
