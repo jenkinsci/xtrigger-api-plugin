@@ -50,29 +50,31 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        C newContext = getContext(pollingNode, log);
+        synchronized (context) {
 
-        if (offlineSlaveOnStartup) {
-            log.info("No nodes were available at startup or at previous poll.");
-            log.info("Recording environment context and waiting for next schedule to check if there are modifications.");
-            offlineSlaveOnStartup = false;
-            setNewContext(newContext);
-            return false;
+            C newContext = getContext(pollingNode, log);
+
+            if (offlineSlaveOnStartup) {
+                log.info("No nodes were available at startup or at previous poll.");
+                log.info("Recording environment context and waiting for next schedule to check if there are modifications.");
+                offlineSlaveOnStartup = false;
+                setNewContext(newContext);
+                return false;
+            }
+
+            if (context == null) {
+                log.info("Recording context. Check changes in next poll.");
+                setNewContext(newContext);
+                return false;
+            }
+
+            boolean changed = checkIfModified(context, newContext, log);
+            return changed;
         }
-
-        if (context == null) {
-            log.info("Recording context. Check changes in next poll.");
-            setNewContext(newContext);
-            return false;
-        }
-
-        boolean changed = checkIfModified(context, newContext, log);
-        setNewContext(newContext);
-        return changed;
     }
 
     @Override
-    protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
+    protected synchronized boolean checkIfModified(XTriggerLog log) throws XTriggerException {
         C newContext = getContext(log);
 
         if (context == null) {
@@ -82,12 +84,13 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
         }
 
         boolean changed = checkIfModified(context, newContext, log);
-        setNewContext(newContext);
         return changed;
     }
 
-    private void setNewContext(C context) {
-        this.context = context;
+    protected void setNewContext(C context) {
+        synchronized (context) {
+            this.context = context;
+        }
     }
 
     /**
@@ -95,8 +98,10 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      *
      * @param oldContext the previous context
      */
-    public void resetOldContext(C oldContext) {
-        this.context = oldContext;
+    protected void resetOldContext(C oldContext) {
+        synchronized (context) {
+            this.context = oldContext;
+        }
     }
 
     /**
