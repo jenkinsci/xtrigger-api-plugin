@@ -466,15 +466,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getNodesLabel(AbstractProject project, Label label) {
-
-        Node lastBuildOnNode = project.getLastBuiltOn();
-        boolean isAPreviousBuildNode = lastBuildOnNode != null;
-
         List<Node> result = new ArrayList<Node>();
+        List<Node> remainingNodes = new ArrayList<Node>();
+
         Set<Node> nodes = label.getNodes();
         for (Node node : nodes) {
             if (node != null) {
-                if (!isAPreviousBuildNode) {
+                if (!isAPreviousBuildNode(project)) {
                     FilePath nodePath = node.getRootPath();
                     if (nodePath != null) {
                         result.add(node);
@@ -482,14 +480,28 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 } else {
                     FilePath nodeRootPath = node.getRootPath();
                     if (nodeRootPath != null) {
-                        if (nodeRootPath.equals(lastBuildOnNode.getRootPath())) {
+                        //We recommend first the samed node
+                        Node lastBuildOnNode = project.getLastBuiltOn();
+                        if (lastBuildOnNode != null && nodeRootPath.equals(lastBuildOnNode.getRootPath())) {
                             result.add(0, node);
+                        } else {
+                            remainingNodes.add(node);
                         }
                     }
                 }
             }
         }
-        return result;
+
+        if (result.size() > 0) {
+            return result;
+        } else {
+            return remainingNodes;
+        }
+    }
+
+    private boolean isAPreviousBuildNode(AbstractProject project) {
+        Node lastBuildOnNode = project.getLastBuiltOn();
+        return lastBuildOnNode != null;
     }
 
 }
