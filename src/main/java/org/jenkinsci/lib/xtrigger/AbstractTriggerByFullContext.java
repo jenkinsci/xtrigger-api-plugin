@@ -12,6 +12,8 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     private transient C context;
 
+    private transient Object lock = new Object();
+
     /**
      * Builds a trigger object
      * Calls an implementation trigger
@@ -50,7 +52,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        synchronized (context) {
+        synchronized (lock) {
 
             C newContext = getContext(pollingNode, log);
 
@@ -74,21 +76,23 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     }
 
     @Override
-    protected synchronized boolean checkIfModified(XTriggerLog log) throws XTriggerException {
-        C newContext = getContext(log);
+    protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
+        synchronized (lock) {
+            C newContext = getContext(log);
 
-        if (context == null) {
-            log.info("Recording context. Check changes in next poll.");
-            setNewContext(newContext);
-            return false;
+            if (context == null) {
+                log.info("Recording context. Check changes in next poll.");
+                setNewContext(newContext);
+                return false;
+            }
+
+            boolean changed = checkIfModified(context, newContext, log);
+            return changed;
         }
-
-        boolean changed = checkIfModified(context, newContext, log);
-        return changed;
     }
 
     protected void setNewContext(C context) {
-        synchronized (context) {
+        synchronized (lock) {
             this.context = context;
         }
     }
@@ -99,7 +103,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * @param oldContext the previous context
      */
     protected void resetOldContext(C oldContext) {
-        synchronized (context) {
+        synchronized (lock) {
             this.context = oldContext;
         }
     }
