@@ -52,6 +52,11 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
+        // make sure the lock is not null; when de-serialising
+        if(lock==null){
+            lock = new Object();
+        }
+        
         synchronized (lock) {
 
             C newContext = getContext(pollingNode, log);
@@ -77,6 +82,12 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     @Override
     protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
+        
+        // make sure the lock is not null; when de-serialising
+        if(lock==null){
+            lock = new Object();
+        }
+        
         synchronized (lock) {
             C newContext = getContext(log);
 
@@ -92,6 +103,12 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     }
 
     protected void setNewContext(C context) {
+        
+         // make sure the lock is not null; when de-serialising
+        if(lock==null){
+            lock = new Object();
+        }
+        
         synchronized (lock) {
             this.context = context;
         }
@@ -103,6 +120,12 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * @param oldContext the previous context
      */
     protected void resetOldContext(C oldContext) {
+        
+         // make sure the lock is not null; when de-serialising
+        if(lock==null){
+            lock = new Object();
+        }
+        
         synchronized (lock) {
             this.context = oldContext;
         }
