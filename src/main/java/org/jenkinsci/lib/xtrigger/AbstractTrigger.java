@@ -242,7 +242,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
-
     private void reportError(XTriggerLog log, Throwable e) {
         log.error("Polling error...");
         String message = e.getMessage();
@@ -252,9 +251,8 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         Throwable cause = e.getCause();
         if (cause != null) {
             log.error("Error cause: " + cause.getMessage());
-            cause.printStackTrace();
         }
-        e.printStackTrace();
+        LOGGER.log(Level.WARNING, "Polling failed", e);
     }
 
     protected Action[] getScheduledXTriggerActions(Node pollingNode, XTriggerLog log) throws XTriggerException {
