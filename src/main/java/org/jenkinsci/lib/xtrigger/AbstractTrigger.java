@@ -7,6 +7,7 @@ import hudson.model.*;
 import hudson.triggers.Trigger;
 import hudson.util.NullStream;
 import hudson.util.StreamTaskListener;
+
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.lib.envinject.EnvInjectException;
 import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
@@ -19,6 +20,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import jenkins.model.Jenkins;
 
 /**
  * @author Gregory Boissinot
@@ -429,14 +432,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         if (targetLabel != null) {
             return getNodesLabel(project, targetLabel);
         } else {
-            log.info("Looking for a node with no predefined label.");
-            log.info("Trying to poll with the last built on node.");
-            Node lastBuildOnNode = project.getLastBuiltOn();
-            if (lastBuildOnNode == null) {
-                log.info("Trying to poll on master node.");
-                return Arrays.asList(getMasterNode());
-            }
-            return Arrays.asList(lastBuildOnNode);
+            return Jenkins.getInstance().getNodes();
         }
     }
 
