@@ -14,6 +14,14 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     private transient Object lock = new Object();
 
+    // make sure the lock is not null; when de-serialising
+    private Object getLock () {
+        if (lock == null) {
+            lock = new Object();
+        }
+        return lock;
+    }
+
     /**
      * Builds a trigger object
      * Calls an implementation trigger
@@ -52,13 +60,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
-
+        synchronized (getLock()) {
             C newContext = getContext(pollingNode, log);
 
             if (offlineSlaveOnStartup) {
@@ -82,13 +84,8 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     @Override
     protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
-        
-        // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
+
+        synchronized (getLock()) {
             C newContext = getContext(log);
 
             if (context == null) {
@@ -103,13 +100,8 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     }
 
     protected void setNewContext(C context) {
-        
-         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
+
+        synchronized (getLock()) {
             this.context = context;
         }
     }
@@ -120,13 +112,8 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * @param oldContext the previous context
      */
     protected void resetOldContext(C oldContext) {
-        
-         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
+
+        synchronized (getLock()) {
             this.context = oldContext;
         }
     }
