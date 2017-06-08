@@ -106,6 +106,11 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     /**
      * Can be overridden if needed
+     * @param pollingNode the node where the polling needs to be done
+     * @param project the project to trigger
+     * @param newInstance true if the trigger is new, false the trigger is loaded from disk
+     * @param log the XTrigger logger
+     * @throws XTriggerException This is a blanket throws for any problem that occurs while starting a trigger
      */
     protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
     }
@@ -278,7 +283,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     /**
      * Checks if there are modifications in the environment between last poll
      *
+     * @param pollingNode the node to poll for modifications
+     * @param log the logger for the trigger
      * @return true if there are modifications
+     * @throws XTriggerException if there is an issue polling the node
      */
     protected abstract boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException;
 
@@ -298,7 +306,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected abstract String getCause();
 
     /**
-     * Get the node where the polling need to be done
+     * Get the node where the polling needs to be done
      * <p/>
      * The returned node has a number of executor different of 0.
      *

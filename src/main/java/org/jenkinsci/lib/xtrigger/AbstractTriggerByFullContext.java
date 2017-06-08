@@ -123,6 +123,10 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * This method is alternative to getContext(XTriggerLog log)
      * It must be overridden
      * from 0.26
+     * @param pollingNode the node to poll
+     * @param log the logger for xtrigger
+     * @return the context of the trigger
+     * @throws XTriggerException any error that occurs while getting the context
      */
     protected C getContext(Node pollingNode, XTriggerLog log) throws XTriggerException {
         return null;
@@ -133,6 +137,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * This method is alternative to getContext(Node pollingNode, XTriggerLog log)
      * It must be overridden
      * from 0.26
+     * @param log the logger for xtrigger
+     * @return the context of the trigger
+     * @throws XTriggerException any error that occurs while getting the context
      */
     protected C getContext(XTriggerLog log) throws XTriggerException {
         return null;
@@ -141,7 +148,11 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     /**
      * Checks if there are modifications in the environment between last poll
      *
+     * @param oldContext the context of the last poll
+     * @param newContext the context of the new poll
+     * @param log the logger for xtrigger
      * @return true if there are modifications
+     * @throws XTriggerException any error that occurs while getting the context
      */
     protected abstract boolean checkIfModified(C oldContext, C newContext, XTriggerLog log) throws XTriggerException;
 
