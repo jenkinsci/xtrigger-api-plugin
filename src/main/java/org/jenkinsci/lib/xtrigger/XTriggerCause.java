@@ -3,9 +3,10 @@ package org.jenkinsci.lib.xtrigger;
 import hudson.console.HyperlinkNote;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import hudson.model.TaskListener;
 import hudson.remoting.Callable;
+import jenkins.security.MasterToSlaveCallable;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -43,8 +44,7 @@ public class XTriggerCause extends Cause {
         final XTriggerCauseAction causeAction = build.getAction(XTriggerCauseAction.class);
         if (causeAction != null) {
             try {
-                Hudson.getInstance().getRootPath().act(new Callable<Void, XTriggerException>() {
-                    @Override
+                Jenkins.getInstance().getRootPath().act(new MasterToSlaveCallable<Void, XTriggerException>() {
                     public Void call() throws XTriggerException {
                         causeAction.setBuild(build);
                         File triggerLogFile = causeAction.getLogFile();

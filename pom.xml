@@ -3,9 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jenkins-ci</groupId>
-        <artifactId>jenkins</artifactId>
-        <version>1.21</version>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>2.0</version>
     </parent>
 
     <groupId>org.jenkins-ci.lib</groupId>
@@ -38,37 +38,21 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
-        <jenkins.core.version>1.480</jenkins.core.version>
         <envinject-lib.version>1.19</envinject-lib.version>
     </properties>
 
     <scm>
         <connection>scm:git:git://github.com/jenkinsci/xtrigger-lib.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/xtrigger-lib.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-core</artifactId>
-            <version>${jenkins.core.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.jenkins-ci.lib</groupId>
             <artifactId>envinject-lib</artifactId>
             <version>${envinject-lib.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness</artifactId>
-            <version>${jenkins.core.version}</version>
-        </dependency>
-
     </dependencies>
 
     <repositories>

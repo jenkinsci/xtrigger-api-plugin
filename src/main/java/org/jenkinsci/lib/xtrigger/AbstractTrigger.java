@@ -168,7 +168,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             this.triggerName = triggerName;
         }
 
-        @Override
         public void run() {
             XTriggerLog log = null;
             try {
