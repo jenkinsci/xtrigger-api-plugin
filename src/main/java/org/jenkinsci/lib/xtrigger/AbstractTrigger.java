@@ -159,12 +159,11 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected abstract String getName();
 
     public XTriggerDescriptor getDescriptor() {
-        return (XTriggerDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
+        return (XTriggerDescriptor) super.getDescriptor();
     }
 
     /**
      * Asynchronous task
-     * TODO: removed Serializable, unsure why it was originally there
      */
     private class Runner implements Runnable {
 
@@ -174,6 +173,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             this.triggerName = triggerName;
         }
 
+        @Override
         public void run() {
             XTriggerLog log = null;
             try {

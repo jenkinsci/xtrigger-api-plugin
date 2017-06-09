@@ -37,10 +37,12 @@ public class XTriggerCauseAction implements Action {
         return logMessage;
     }
 
+    @Override
     public String getIconFileName() {
         return null;
     }
 
+    @Override
     public String getDisplayName() {
         return null;
     }
@@ -50,6 +52,7 @@ public class XTriggerCauseAction implements Action {
         return build;
     }
 
+    @Override
     public final String getUrlName() {
         return URL_NAME;
     }

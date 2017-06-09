@@ -3,9 +3,7 @@ package org.jenkinsci.lib.xtrigger;
 import hudson.console.HyperlinkNote;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
-import jenkins.model.Jenkins;
 import hudson.model.TaskListener;
-import jenkins.security.MasterToSlaveCallable;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -27,9 +25,7 @@ public class XTriggerCause extends Cause {
     private boolean logEnabled;
 
     protected XTriggerCause(String triggerName, String causeFrom) {
-        this.triggerName = triggerName;
-        this.causeFrom = causeFrom;
-        this.logEnabled = false;
+        this(triggerName, causeFrom, false);
     }
 
     protected XTriggerCause(String triggerName, String causeFrom, boolean logEnabled) {
@@ -43,23 +39,14 @@ public class XTriggerCause extends Cause {
         final XTriggerCauseAction causeAction = build.getAction(XTriggerCauseAction.class);
         if (causeAction != null) {
             try {
-                Jenkins.getActiveInstance().getRootPath().act(new MasterToSlaveCallable<Void, XTriggerException>() {
-                    public Void call() throws XTriggerException {
-                        causeAction.setBuild(build);
-                        File triggerLogFile = causeAction.getLogFile();
-                        String logContent = causeAction.getLogMessage();
-                        try {
-                            FileUtils.writeStringToFile(triggerLogFile, logContent);
-                        } catch (IOException ioe) {
-                            throw new XTriggerException(ioe);
-                        }
-                        return null;
-                    }
-                });
-            } catch (IOException ioe) {
-                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", ioe);
-            } catch (InterruptedException ie) {
-                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", ie);
+                causeAction.setBuild(build);
+                File triggerLogFile = causeAction.getLogFile();
+                String logContent = causeAction.getLogMessage();
+                try {
+                    FileUtils.writeStringToFile(triggerLogFile, logContent);
+                } catch (IOException ioe) {
+                    throw new XTriggerException(ioe);
+                }
             } catch (XTriggerException xe) {
                 LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", xe);
             }
