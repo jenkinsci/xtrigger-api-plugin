@@ -42,13 +42,9 @@ public class XTriggerCause extends Cause {
                 causeAction.setBuild(build);
                 File triggerLogFile = causeAction.getLogFile();
                 String logContent = causeAction.getLogMessage();
-                try {
-                    FileUtils.writeStringToFile(triggerLogFile, logContent);
-                } catch (IOException ioe) {
-                    throw new XTriggerException(ioe);
-                }
-            } catch (XTriggerException xe) {
-                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", xe);
+                FileUtils.writeStringToFile(triggerLogFile, logContent);
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", e);
             }
         }
     }

@@ -4,6 +4,8 @@ import antlr.ANTLRException;
 import hudson.model.BuildableItem;
 import hudson.model.Node;
 
+import java.io.ObjectStreamException;
+
 
 /**
  * @author Gregory Boissinot
@@ -14,12 +16,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     private transient Object lock = new Object();
 
-    // make sure the lock is not null; when de-serialising
-    public Object readResolve() {
-        if(lock == null) {
-            lock = new Object();
-        }
-        return this;
+    protected Object readResolve() throws ObjectStreamException {
+        lock = new Object();
+        return super.readResolve();
     }
 
     /**
