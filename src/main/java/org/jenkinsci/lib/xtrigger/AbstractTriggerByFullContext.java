@@ -4,6 +4,8 @@ import antlr.ANTLRException;
 import hudson.model.BuildableItem;
 import hudson.model.Node;
 
+import java.io.ObjectStreamException;
+
 
 /**
  * @author Gregory Boissinot
@@ -13,6 +15,11 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     private transient C context;
 
     private transient Object lock = new Object();
+
+    protected Object readResolve() throws ObjectStreamException {
+        lock = new Object();
+        return super.readResolve();
+    }
 
     /**
      * Builds a trigger object
@@ -52,13 +59,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
         synchronized (lock) {
-
             C newContext = getContext(pollingNode, log);
 
             if (offlineSlaveOnStartup) {
@@ -82,12 +83,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     @Override
     protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
-        
-        // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
+
         synchronized (lock) {
             C newContext = getContext(log);
 
@@ -103,12 +99,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     }
 
     protected void setNewContext(C context) {
-        
-         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
+
         synchronized (lock) {
             this.context = context;
         }
@@ -120,12 +111,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * @param oldContext the previous context
      */
     protected void resetOldContext(C oldContext) {
-        
-         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
+
         synchronized (lock) {
             this.context = oldContext;
         }
@@ -136,6 +122,10 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * This method is alternative to getContext(XTriggerLog log)
      * It must be overridden
      * from 0.26
+     * @param pollingNode the node to poll
+     * @param log the logger for xtrigger
+     * @return the context of the trigger
+     * @throws XTriggerException any error that occurs while getting the context
      */
     protected C getContext(Node pollingNode, XTriggerLog log) throws XTriggerException {
         return null;
@@ -146,6 +136,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * This method is alternative to getContext(Node pollingNode, XTriggerLog log)
      * It must be overridden
      * from 0.26
+     * @param log the logger for xtrigger
+     * @return the context of the trigger
+     * @throws XTriggerException any error that occurs while getting the context
      */
     protected C getContext(XTriggerLog log) throws XTriggerException {
         return null;
@@ -154,7 +147,11 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     /**
      * Checks if there are modifications in the environment between last poll
      *
+     * @param oldContext the context of the last poll
+     * @param newContext the context of the new poll
+     * @param log the logger for xtrigger
      * @return true if there are modifications
+     * @throws XTriggerException any error that occurs while getting the context
      */
     protected abstract boolean checkIfModified(C oldContext, C newContext, XTriggerLog log) throws XTriggerException;
 

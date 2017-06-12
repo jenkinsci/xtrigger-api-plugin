@@ -28,7 +28,7 @@ import jenkins.model.Jenkins;
  */
 public abstract class AbstractTrigger extends Trigger<BuildableItem> implements Serializable {
 
-    protected static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
+    protected final static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
 
     private String triggerLabel;
 
@@ -106,6 +106,11 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     /**
      * Can be overridden if needed
+     * @param pollingNode the node where the polling needs to be done
+     * @param project the project to trigger
+     * @param newInstance true if the trigger is new, false the trigger is loaded from disk
+     * @param log the XTrigger logger
+     * @throws XTriggerException This is a blanket throws for any problem that occurs while starting a trigger
      */
     protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
     }
@@ -131,7 +136,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         try {
             StreamTaskListener listener = new StreamTaskListener(getLogFile());
             log = new XTriggerLog(listener);
-            if (Hudson.getInstance().isQuietingDown()) {
+            if (Jenkins.getActiveInstance().isQuietingDown()) {
                 log.info("Jenkins is quieting down.");
             } else if (!project.isBuildable()) {
                 log.info("The job is not buildable. Activate it to poll again.");
@@ -154,13 +159,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected abstract String getName();
 
     public XTriggerDescriptor getDescriptor() {
-        return (XTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (XTriggerDescriptor) super.getDescriptor();
     }
 
     /**
      * Asynchronous task
      */
-    private class Runner implements Runnable, Serializable {
+    private class Runner implements Runnable {
 
         private String triggerName;
 
@@ -278,7 +283,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     /**
      * Checks if there are modifications in the environment between last poll
      *
+     * @param pollingNode the node to poll for modifications
+     * @param log the logger for the trigger
      * @return true if there are modifications
+     * @throws XTriggerException if there is an issue polling the node
      */
     protected abstract boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException;
 
@@ -298,7 +306,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected abstract String getCause();
 
     /**
-     * Get the node where the polling need to be done
+     * Get the node where the polling needs to be done
      * <p/>
      * The returned node has a number of executor different of 0.
      *
@@ -369,7 +377,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 return Arrays.asList(getMasterNode());
             }
 
-            Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
+            Label targetLabel = Jenkins.getActiveInstance().getLabel(triggerLabel);
             return getNodesLabel(project, targetLabel);
         }
 
@@ -390,7 +398,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 return Arrays.asList(getMasterNode());
             }
 
-            Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
+            Label targetLabel = Jenkins.getActiveInstance().getLabel(triggerLabel);
             return getNodesLabel(project, targetLabel);
         }
 
@@ -432,7 +440,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         if (targetLabel != null) {
             return getNodesLabel(project, targetLabel);
         } else {
-            return Jenkins.getInstance().getNodes();
+            return Jenkins.getActiveInstance().getNodes();
         }
     }
 
@@ -451,7 +459,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private Node getMasterNode() {
-        Computer computer = Hudson.getInstance().toComputer();
+        Computer computer = Jenkins.getActiveInstance().toComputer();
         if (computer != null) {
             return computer.getNode();
         } else {
