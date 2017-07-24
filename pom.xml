@@ -55,6 +55,14 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-war</artifactId>
+            <type>war</type>
+            <version>${jenkins.core.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>envinject-api</artifactId>
             <version>1.0</version>
@@ -70,6 +78,13 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-job</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
