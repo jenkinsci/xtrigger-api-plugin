@@ -211,7 +211,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                     log.info("Changes found. Scheduling a build.");
                     job.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true));
                     for (Action a : getScheduledXTriggerActions(null, log)) {
-                        //((Job) job).addAction(a);
+                        ((Job) job).addAction(a);
                     }
                 } else {
                     log.info("No changes.");
