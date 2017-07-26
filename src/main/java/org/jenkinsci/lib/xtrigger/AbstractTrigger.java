@@ -127,23 +127,27 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     @Override
     public void run() {
-        Job project = (Job) job;
         XTriggerDescriptor descriptor = getDescriptor();
         ExecutorService executorService = descriptor.getExecutor();
         XTriggerLog log = null;
         try {
             StreamTaskListener listener = new StreamTaskListener(getLogFile());
             log = new XTriggerLog(listener);
-            if (Jenkins.getActiveInstance().isQuietingDown()) {
-                log.info("Jenkins is quieting down.");
-            } else if (!project.isBuildable()) {
-                log.info("The job is not buildable. Activate it to poll again.");
-            } else if (!unblockConcurrentBuild && project.isBuilding()) {
-                log.info("The job is building. Waiting for next poll.");
-            } else {
-                Runner runner = new Runner(getName());
-                executorService.execute(runner);
+            if (job instanceof Job) {
+                Job project = (Job) job;
+                if (Jenkins.getActiveInstance().isQuietingDown()) {
+                    log.info("Jenkins is quieting down.");
+                    return;
+                } else if (!project.isBuildable()) {
+                    log.info("The job is not buildable. Activate it to poll again.");
+                    return;
+                } else if (!unblockConcurrentBuild && project.isBuilding()) {
+                    log.info("The job is building. Waiting for next poll.");
+                    return;
+                }
             }
+            Runner runner = new Runner(getName());
+            executorService.execute(runner);
         } catch (Throwable t) {
             LOGGER.log(Level.SEVERE, "Severe error during the trigger execution " + t.getMessage());
             t.printStackTrace();
@@ -214,8 +218,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
                     job.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true));
-                    for (Action a : getScheduledXTriggerActions(null, log)) {
-                        ((Job) job).addAction(a);
+                    if (job instanceof Job) {
+                        for (Action a : getScheduledXTriggerActions(null, log)) {
+                            ((Job) job).addAction(a);
+                        }
                     }
                 } else {
                     log.info("No changes.");
