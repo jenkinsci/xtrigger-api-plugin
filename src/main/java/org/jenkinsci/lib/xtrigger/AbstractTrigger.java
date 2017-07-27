@@ -10,7 +10,7 @@ import hudson.util.StreamTaskListener;
 
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.lib.envinject.EnvInjectException;
-import org.jenkinsci.plugins.envinjectapi.util.EnvVarsResolver;
+import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,13 +112,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     @Deprecated
     protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
-        return resolveEnvVars(value, (Job)project, node);
-    }
-
-    protected String resolveEnvVars(String value, Job project, Node node) throws XTriggerException {
+        EnvVarsResolver varsResolver = new EnvVarsResolver();
         Map<String, String> envVars;
         try {
-            envVars = EnvVarsResolver.getPollingEnvVars(project, node);
+            envVars = varsResolver.getPollingEnvVars(project, node);
         } catch (EnvInjectException envInjectException) {
             throw new XTriggerException(envInjectException);
         }
@@ -219,8 +216,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                     log.info("Changes found. Scheduling a build.");
                     job.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true));
                     if (job instanceof Job) {
+                        Job project = (Job) job;
                         for (Action a : getScheduledXTriggerActions(null, log)) {
-                            ((Job) job).addAction(a);
+                            project.addAction(a);
                         }
                     }
                 } else {
