@@ -3,13 +3,13 @@
          xmlns:i="jelly:fmt" xmlns:p="/lib/hudson/project">
     <l:layout title="${it.displayName}">
         <j:invokeStatic var="currentThread" className="java.lang.Thread" method="currentThread"/>
-        <j:invoke var="buildClass" on="${currentThread.contextClassLoader}" method="loadClass">
-            <j:arg value="hudson.model.AbstractBuild"/>
+        <j:invoke var="runClass" on="${currentThread.contextClassLoader}" method="loadClass">
+            <j:arg value="hudson.model.Run"/>
         </j:invoke>
-        <j:set var="build" value="${request.findAncestorObject(buildClass)}"/>
-        <st:include page="sidepanel.jelly" it="${build}"/>
+        <j:set var="run" value="${request.findAncestorObject(runClass)}"/>
+        <st:include page="sidepanel.jelly" it="${run}"/>
         <l:main-panel>
-            <h1>${%Build} #${build.number}</h1>
+            <h1>${%Build} #${run.number}</h1>
             <l:pane title="${it.title}" width="3" />
             <j:set var="log" value="${it.log}"/>
             <j:choose>

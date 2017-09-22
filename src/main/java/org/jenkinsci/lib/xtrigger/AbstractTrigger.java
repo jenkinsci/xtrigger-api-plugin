@@ -4,6 +4,7 @@ import antlr.ANTLRException;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.model.*;
+import hudson.model.queue.SubTask;
 import hudson.triggers.Trigger;
 import hudson.util.NullStream;
 import hudson.util.StreamTaskListener;
@@ -20,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
 
 /**
  * @author Gregory Boissinot
@@ -110,7 +112,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     @Override
     public void run() {
-        AbstractProject project = (AbstractProject) job;
         XTriggerDescriptor descriptor = getDescriptor();
         ExecutorService executorService = descriptor.getExecutor();
         XTriggerLog log = null;
@@ -119,9 +120,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             log = new XTriggerLog(listener);
             if (Hudson.getInstance().isQuietingDown()) {
                 log.info("Jenkins is quieting down.");
-            } else if (!project.isBuildable()) {
+            } else if (!((Job<?, ?>) job).isBuildable()) {
                 log.info("The job is not buildable. Activate it to poll again.");
-            } else if (!unblockConcurrentBuild && project.isBuilding()) {
+            } else if (!unblockConcurrentBuild && ((Job<?, ?>) job).isBuilding()) {
                 log.info("The job is building. Waiting for next poll.");
             } else {
                 Runner runner = new Runner(getName());
@@ -196,8 +197,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
-                    AbstractProject project = (AbstractProject) job;
-                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true), getScheduledXTriggerActions(null, log));
+                    ParameterizedJobMixIn<?, ?> scheduledJob = new ParameterizedJobMixIn() {
+                        @Override
+                        protected Job<?, ?> asJob() {
+                            return (Job<?, ?>) job;
+                        }
+                    };
+                    scheduledJob.scheduleBuild2(0, getScheduledXTriggerActions(null, log, triggerName));
                 } else {
                     log.info("No changes.");
                 }
@@ -244,14 +250,16 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         LOGGER.log(Level.WARNING, "Polling failed", e);
     }
 
-    protected Action[] getScheduledXTriggerActions(Node pollingNode, XTriggerLog log) throws XTriggerException {
+    protected Action[] getScheduledXTriggerActions(Node pollingNode, XTriggerLog log, String triggerName)
+            throws XTriggerException {
         Action[] actions = getScheduledActions(pollingNode, log);
-        int nbNewAction = actions.length + 1;
+        int nbNewAction = actions.length + 2;
         Action[] newActions = new Action[nbNewAction];
         for (int i = 0; i < actions.length; i++) {
             newActions[i] = actions[i];
         }
         try {
+            newActions[newActions.length - 2] = new CauseAction(new XTriggerCause(triggerName, getCause(), true));
             newActions[newActions.length - 1] = new XTriggerCauseAction(FileUtils.readFileToString(getLogFile()));
         } catch (IOException ioe) {
             throw new XTriggerException(ioe);
@@ -344,8 +352,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     private List<Node> getPollingNodeListRequiredNoWS(XTriggerLog log) {
 
-        AbstractProject project = (AbstractProject) job;
-
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
             log.info(String.format("Looking for a node to the restricted label %s.", triggerLabel));
@@ -356,15 +362,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             }
 
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel((SubTask) job, targetLabel);
         }
 
         return candidatePollingNode(log);
     }
 
     private List<Node> getPollingNodeListRequiredWS(XTriggerLog log) {
-
-        AbstractProject project = (AbstractProject) job;
 
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
@@ -377,12 +381,12 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             }
 
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel((SubTask) job, targetLabel);
         }
 
         //Search for the last built on
         log.info("Looking for the last built on node.");
-        Node lastBuildOnNode = project.getLastBuiltOn();
+        Node lastBuildOnNode = ((SubTask) job).getLastBuiltOn();
         if (lastBuildOnNode == null) {
             return getPollingNodeNoPreviousBuild(log);
         }
@@ -402,21 +406,19 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodeNoPreviousBuild(XTriggerLog log) {
-        AbstractProject project = (AbstractProject) job;
         Label targetLabel = getTargetLabel(log);
         if (targetLabel != null) {
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel((SubTask) job, targetLabel);
         }
         return null;
     }
 
     private List<Node> candidatePollingNode(XTriggerLog log) {
         log.info("Looking for a candidate node to run the poll.");
-        AbstractProject project = (AbstractProject) job;
 
         Label targetLabel = getTargetLabel(log);
         if (targetLabel != null) {
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel((SubTask) job, targetLabel);
         } else {
             return Jenkins.getInstance().getNodes();
         }
@@ -426,8 +428,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * Returns the label if any to poll
      */
     private Label getTargetLabel(XTriggerLog log) {
-        AbstractProject p = (AbstractProject) job;
-        Label assignedLabel = p.getAssignedLabel();
+        Label assignedLabel = ((SubTask) job).getAssignedLabel();
         if (assignedLabel != null) {
             log.info(String.format("Trying to find an eligible node with the assigned project label %s.", assignedLabel));
             return assignedLabel;
@@ -445,14 +446,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
-    private List<Node> getNodesLabel(AbstractProject project, Label label) {
+    private List<Node> getNodesLabel(SubTask subTask, Label label) {
         List<Node> result = new ArrayList<Node>();
         List<Node> remainingNodes = new ArrayList<Node>();
 
         Set<Node> nodes = label.getNodes();
         for (Node node : nodes) {
             if (node != null) {
-                if (!isAPreviousBuildNode(project)) {
+                if (!isAPreviousBuildNode(subTask)) {
                     FilePath nodePath = node.getRootPath();
                     if (nodePath != null) {
                         result.add(node);
@@ -461,7 +462,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                     FilePath nodeRootPath = node.getRootPath();
                     if (nodeRootPath != null) {
                         //We recommend first the samed node
-                        Node lastBuildOnNode = project.getLastBuiltOn();
+                        Node lastBuildOnNode = subTask.getLastBuiltOn();
                         if (lastBuildOnNode != null && nodeRootPath.equals(lastBuildOnNode.getRootPath())) {
                             result.add(0, node);
                         } else {
@@ -479,8 +480,8 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         }
     }
 
-    private boolean isAPreviousBuildNode(AbstractProject project) {
-        Node lastBuildOnNode = project.getLastBuiltOn();
+    private boolean isAPreviousBuildNode(SubTask subTask) {
+        Node lastBuildOnNode = subTask.getLastBuiltOn();
         return lastBuildOnNode != null;
     }
 
