@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci</groupId>
         <artifactId>jenkins</artifactId>
-        <version>1.21</version>
+        <version>1.37</version>
     </parent>
 
     <groupId>org.jenkins-ci.lib</groupId>
@@ -38,8 +38,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
-        <jenkins.core.version>1.480</jenkins.core.version>
-        <envinject-lib.version>1.19</envinject-lib.version>
+        <jenkins.core.version>1.568</jenkins.core.version>
     </properties>
 
     <scm>
@@ -55,12 +54,6 @@
             <artifactId>jenkins-core</artifactId>
             <version>${jenkins.core.version}</version>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.lib</groupId>
-            <artifactId>envinject-lib</artifactId>
-            <version>${envinject-lib.version}</version>
         </dependency>
 
         <dependency>

@@ -2,8 +2,8 @@ package org.jenkinsci.lib.xtrigger;
 
 import hudson.Util;
 import hudson.console.AnnotatedLargeText;
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
+import hudson.model.Run;
 import org.apache.commons.jelly.XMLOutput;
 
 import java.io.File;
@@ -21,7 +21,7 @@ public class XTriggerCauseAction implements Action {
      * Set when the cause object is added to the build object
      * at job startup
      */
-    private AbstractBuild build;
+    private Run<?, ?> run;
 
     /**
      * Set on creation
@@ -48,8 +48,8 @@ public class XTriggerCauseAction implements Action {
     }
 
     @SuppressWarnings("unused")
-    public AbstractBuild getBuild() {
-        return build;
+    public Run<?, ?> getRun() {
+        return run;
     }
 
     @Override
@@ -57,15 +57,15 @@ public class XTriggerCauseAction implements Action {
         return URL_NAME;
     }
 
-    public void setBuild(AbstractBuild build) {
-        this.build = build;
+    public void setRun(Run<?, ?> run) {
+        this.run = run;
     }
 
     public File getLogFile() {
-        if (build == null) {
+        if (run == null) {
             return null;
         }
-        return new File(build.getRootDir(), "triggerlog.xml");
+        return new File(run.getRootDir(), "triggerlog.xml");
     }
 
     @SuppressWarnings("unused")
@@ -79,10 +79,10 @@ public class XTriggerCauseAction implements Action {
 
     @SuppressWarnings("unused")
     public String getTitle() {
-        if (build == null) {
+        if (run == null) {
             return "XTrigger Log";
         }
-        XTriggerCause triggerCause = (XTriggerCause) build.getCause(XTriggerCause.class);
+        XTriggerCause triggerCause = (XTriggerCause) run.getCause(XTriggerCause.class);
         if (triggerCause == null) {
             return "XTrigger Log";
         }
