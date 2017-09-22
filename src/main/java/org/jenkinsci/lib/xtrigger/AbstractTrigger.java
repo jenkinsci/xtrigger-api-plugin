@@ -9,8 +9,6 @@ import hudson.util.NullStream;
 import hudson.util.StreamTaskListener;
 
 import org.apache.commons.io.FileUtils;
-import org.jenkinsci.lib.envinject.EnvInjectException;
-import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,18 +106,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * Can be overridden if needed
      */
     protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
-    }
-
-    @SuppressWarnings("unused")
-    protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
-        EnvVarsResolver varsResolver = new EnvVarsResolver();
-        Map<String, String> envVars;
-        try {
-            envVars = varsResolver.getPollingEnvVars(project, node);
-        } catch (EnvInjectException envInjectException) {
-            throw new XTriggerException(envInjectException);
-        }
-        return Util.replaceMacro(value, envVars);
     }
 
     @Override
