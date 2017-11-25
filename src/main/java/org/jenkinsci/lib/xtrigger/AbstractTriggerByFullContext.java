@@ -4,15 +4,12 @@ import antlr.ANTLRException;
 import hudson.model.BuildableItem;
 import hudson.model.Node;
 
-
 /**
  * @author Gregory Boissinot
  */
 public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> extends AbstractTrigger {
 
     private transient C context;
-
-    private transient Object lock = new Object();
 
     /**
      * Builds a trigger object
@@ -41,7 +38,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      * Can be overridden if needed
      */
     @Override
-    protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
+    protected synchronized void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
         if (isContextOnStartupFetched()) {
             context = getContext(pollingNode, log);
         }
@@ -50,68 +47,45 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     public abstract boolean isContextOnStartupFetched();
 
     @Override
-    protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+    protected synchronized boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
+        C newContext = getContext(pollingNode, log);
+
+        if (offlineSlaveOnStartup) {
+            log.info("No nodes were available at startup or at previous poll.");
+            log.info("Recording environment context and waiting for next schedule to check if there are modifications.");
+            offlineSlaveOnStartup = false;
+            setNewContext(newContext);
+            return false;
         }
-        
-        synchronized (lock) {
 
-            C newContext = getContext(pollingNode, log);
-
-            if (offlineSlaveOnStartup) {
-                log.info("No nodes were available at startup or at previous poll.");
-                log.info("Recording environment context and waiting for next schedule to check if there are modifications.");
-                offlineSlaveOnStartup = false;
-                setNewContext(newContext);
-                return false;
-            }
-
-            if (context == null) {
-                log.info("Recording context. Check changes in next poll.");
-                setNewContext(newContext);
-                return false;
-            }
-
-            boolean changed = checkIfModified(context, newContext, log);
-            return changed;
+        if (context == null) {
+            log.info("Recording context. Check changes in next poll.");
+            setNewContext(newContext);
+            return false;
         }
+
+        boolean changed = checkIfModified(context, newContext, log);
+        return changed;
     }
 
     @Override
-    protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
-        
-        // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
-            C newContext = getContext(log);
+    protected synchronized boolean checkIfModified(XTriggerLog log) throws XTriggerException {
 
-            if (context == null) {
-                log.info("Recording context. Check changes in next poll.");
-                setNewContext(newContext);
-                return false;
-            }
+        C newContext = getContext(log);
 
-            boolean changed = checkIfModified(context, newContext, log);
-            return changed;
+        if (context == null) {
+            log.info("Recording context. Check changes in next poll.");
+            setNewContext(newContext);
+            return false;
         }
+
+        boolean changed = checkIfModified(context, newContext, log);
+        return changed;
     }
 
-    protected void setNewContext(C context) {
-        
-         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
-            this.context = context;
-        }
+    protected synchronized void setNewContext(C context) {
+        this.context = context;
     }
 
     /**
@@ -119,16 +93,8 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
      *
      * @param oldContext the previous context
      */
-    protected void resetOldContext(C oldContext) {
-        
-         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
-        
-        synchronized (lock) {
-            this.context = oldContext;
-        }
+    protected synchronized void resetOldContext(C oldContext) {
+        this.context = oldContext;
     }
 
     /**

@@ -23,14 +23,13 @@
  */
 package org.jenkinsci.lib.xtrigger;
 
-import hudson.FilePath;
-import hudson.model.Action;
-import hudson.model.Node;
-
 import java.io.File;
 import java.io.IOException;
 
 import antlr.ANTLRException;
+import hudson.FilePath;
+import hudson.model.Action;
+import hudson.model.Node;
 
 /**
  * Explicit trigger for testing purposes.
@@ -87,7 +86,7 @@ public class TestTrigger extends AbstractTrigger {
         return "Triggered by test";
     }
 
-    public String getLog() throws IOException {
+    public String getLog() throws IOException, InterruptedException {
         return new FilePath(getLogFile()).readToString();
     }
 
@@ -97,6 +96,7 @@ public class TestTrigger extends AbstractTrigger {
     }
 
     private static final Descriptor DESCRIPTOR = new Descriptor();
+
     public static final class Descriptor extends XTriggerDescriptor {
         @Override
         public String getDisplayName() {

@@ -1,17 +1,19 @@
 package org.jenkinsci.lib.xtrigger;
 
-import hudson.console.HyperlinkNote;
-import hudson.model.AbstractBuild;
-import hudson.model.Cause;
-import hudson.model.Hudson;
-import hudson.model.TaskListener;
-import hudson.remoting.Callable;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.apache.commons.io.FileUtils;
+import org.jenkinsci.remoting.RoleChecker;
+
+import hudson.console.HyperlinkNote;
+import hudson.model.AbstractBuild;
+import hudson.model.Cause;
+import hudson.model.TaskListener;
+import hudson.remoting.Callable;
+import jenkins.model.Jenkins;
 
 /**
  * @author Gregory Boissinot
@@ -43,7 +45,7 @@ public class XTriggerCause extends Cause {
         final XTriggerCauseAction causeAction = build.getAction(XTriggerCauseAction.class);
         if (causeAction != null) {
             try {
-                Hudson.getInstance().getRootPath().act(new Callable<Void, XTriggerException>() {
+                Jenkins.getInstance().getRootPath().act(new Callable<Void, XTriggerException>() {
                     @Override
                     public Void call() throws XTriggerException {
                         causeAction.setBuild(build);
@@ -55,6 +57,10 @@ public class XTriggerCause extends Cause {
                             throw new XTriggerException(ioe);
                         }
                         return null;
+                    }
+
+                    @Override
+                    public void checkRoles(RoleChecker checker) throws SecurityException {
                     }
                 });
             } catch (IOException ioe) {
@@ -78,6 +84,7 @@ public class XTriggerCause extends Cause {
         }
     }
 
+    @Override
     public void print(TaskListener listener) {
         if (causeFrom == null) {
             listener.getLogger().println("[" + triggerName + "]");
@@ -86,7 +93,6 @@ public class XTriggerCause extends Cause {
                     HyperlinkNote.encodeTo("triggerCauseAction", "log")));
         }
     }
-
 
     @SuppressWarnings("unused")
     public String getTriggerName() {

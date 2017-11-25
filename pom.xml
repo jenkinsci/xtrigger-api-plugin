@@ -1,11 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jenkins-ci</groupId>
-        <artifactId>jenkins</artifactId>
-        <version>1.21</version>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>2.32</version>
     </parent>
 
     <groupId>org.jenkins-ci.lib</groupId>
@@ -38,15 +39,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
-        <jenkins.core.version>1.480</jenkins.core.version>
-        <envinject-lib.version>1.19</envinject-lib.version>
+        <jenkins.core.version>2.9</jenkins.core.version>
+        <slf4j.version>1.7.9</slf4j.version>
     </properties>
 
     <scm>
         <connection>scm:git:git://github.com/jenkinsci/xtrigger-lib.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/xtrigger-lib.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <dependencies>
 
@@ -55,18 +56,17 @@
             <artifactId>jenkins-core</artifactId>
             <version>${jenkins.core.version}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jenkins-ci.lib</groupId>
+                    <artifactId>xtrigger-lib</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
         <dependency>
-            <groupId>org.jenkins-ci.lib</groupId>
-            <artifactId>envinject-lib</artifactId>
-            <version>${envinject-lib.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness</artifactId>
-            <version>${jenkins.core.version}</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>envinject-api</artifactId>
+            <version>1.3</version>
         </dependency>
 
     </dependencies>
