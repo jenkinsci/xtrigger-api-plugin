@@ -211,7 +211,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 if (changed) {
                     log.info("Changes found. Scheduling a build.");
                     AbstractProject project = (AbstractProject) job;
-                    project.scheduleBuild(0, new XTriggerCause(triggerName, getCause(), true), getScheduledXTriggerActions(null, log));
+
+                    List<Action> actions = new ArrayList<Action>(Arrays.asList(getScheduledXTriggerActions(null, log)));
+                    actions.add(new CauseAction(new XTriggerCause(triggerName, getCause(), true)));
+                    hudson.model.Queue.getInstance().schedule(project, 0, actions);
                 } else {
                     log.info("No changes.");
                 }
