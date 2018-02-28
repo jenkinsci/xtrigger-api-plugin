@@ -110,7 +110,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
     }
 
-    @SuppressWarnings("unused")
+    @Deprecated // as of 0.34.
     protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
         EnvVarsResolver varsResolver = new EnvVarsResolver();
         Map<String, String> envVars;
