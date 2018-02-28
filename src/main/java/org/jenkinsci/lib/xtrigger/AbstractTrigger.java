@@ -358,8 +358,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     private List<Node> getPollingNodeListRequiredNoWS(XTriggerLog log) {
 
-        AbstractProject project = (AbstractProject) job;
-
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
             log.info(String.format("Looking for a node to the restricted label %s.", triggerLabel));
@@ -370,15 +368,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             }
 
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel(job, targetLabel);
         }
 
         return candidatePollingNode(log);
     }
 
     private List<Node> getPollingNodeListRequiredWS(XTriggerLog log) {
-
-        AbstractProject project = (AbstractProject) job;
 
         //The specified trigger node must be considered first
         if (triggerLabel != null) {
@@ -391,12 +387,12 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             }
 
             Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel(job, targetLabel);
         }
 
         //Search for the last built on
         log.info("Looking for the last built on node.");
-        Node lastBuildOnNode = project.getLastBuiltOn();
+        Node lastBuildOnNode = job.getLastBuiltOn();
         if (lastBuildOnNode == null) {
             return getPollingNodeNoPreviousBuild(log);
         }
@@ -416,21 +412,19 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodeNoPreviousBuild(XTriggerLog log) {
-        AbstractProject project = (AbstractProject) job;
         Label targetLabel = getTargetLabel(log);
         if (targetLabel != null) {
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel(job, targetLabel);
         }
         return null;
     }
 
     private List<Node> candidatePollingNode(XTriggerLog log) {
         log.info("Looking for a candidate node to run the poll.");
-        AbstractProject project = (AbstractProject) job;
 
         Label targetLabel = getTargetLabel(log);
         if (targetLabel != null) {
-            return getNodesLabel(project, targetLabel);
+            return getNodesLabel(job, targetLabel);
         } else {
             return Jenkins.getInstance().getNodes();
         }
