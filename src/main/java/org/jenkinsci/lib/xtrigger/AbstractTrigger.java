@@ -131,7 +131,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         try {
             StreamTaskListener listener = new StreamTaskListener(getLogFile());
             log = new XTriggerLog(listener);
-            if (Hudson.getInstance().isQuietingDown()) {
+            if (Jenkins.getActiveInstance().isQuietingDown()) {
                 log.info("Jenkins is quieting down.");
             } else if (!project.isBuildable()) {
                 log.info("The job is not buildable. Activate it to poll again.");
@@ -154,7 +154,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected abstract String getName();
 
     public XTriggerDescriptor getDescriptor() {
-        return (XTriggerDescriptor) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (XTriggerDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 
     /**
@@ -367,7 +367,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 return Arrays.asList(getMasterNode());
             }
 
-            Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
+            Label targetLabel = Jenkins.getActiveInstance().getLabel(triggerLabel);
             return getNodesLabel(job, targetLabel);
         }
 
@@ -386,7 +386,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 return Arrays.asList(getMasterNode());
             }
 
-            Label targetLabel = Hudson.getInstance().getLabel(triggerLabel);
+            Label targetLabel = Jenkins.getActiveInstance().getLabel(triggerLabel);
             return getNodesLabel(job, targetLabel);
         }
 
@@ -445,7 +445,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private Node getMasterNode() {
-        Computer computer = Hudson.getInstance().toComputer();
+        Computer computer = Jenkins.getActiveInstance().toComputer();
         if (computer != null) {
             return computer.getNode();
         } else {
