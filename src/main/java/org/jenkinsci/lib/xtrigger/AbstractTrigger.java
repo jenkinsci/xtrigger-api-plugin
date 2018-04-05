@@ -440,8 +440,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * Returns the label if any to poll
      */
     private Label getTargetLabel(XTriggerLog log) {
-        AbstractProject p = (AbstractProject) job;
-        Label assignedLabel = p.getAssignedLabel();
+        Label assignedLabel = job.getAssignedLabel();
         if (assignedLabel != null) {
             log.info(String.format("Trying to find an eligible node with the assigned project label %s.", assignedLabel));
             return assignedLabel;
