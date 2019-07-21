@@ -10,7 +10,7 @@
 
     <groupId>org.jenkins-ci.lib</groupId>
     <artifactId>xtrigger-lib</artifactId>
-    <version>0.34</version>
+    <version>0.35-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Jenkins XTrigger Library</name>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/XTrigger+Plugin</url>
@@ -45,7 +45,7 @@
     <scm>
         <connection>scm:git:git://github.com/jenkinsci/xtrigger-lib.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/xtrigger-lib.git</developerConnection>
-      <tag>xtrigger-lib-0.34</tag>
+      <tag>HEAD</tag>
     </scm>
 
 	<distributionManagement>
