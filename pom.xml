@@ -24,9 +24,9 @@
 
     <developers>
         <developer>
-            <id>gbois</id>
-            <name>Gregory Boissinot</name>
-            <timezone>+1</timezone>
+            <id>TonyNoble</id>
+            <name>Tony Noble</name>
+            <timezone>+0</timezone>
             <roles>
                 <role>Project Owner</role>
                 <role>Project Lead Developer</role>
@@ -46,7 +46,18 @@
         <connection>scm:git:git://github.com/jenkinsci/xtrigger-lib.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/xtrigger-lib.git</developerConnection>
       <tag>HEAD</tag>
-  </scm>
+    </scm>
+
+	<distributionManagement>
+		<repository>
+			<id>maven.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>maven.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 
     <dependencies>
 
@@ -91,14 +102,14 @@
         <repository>
             <id>repo.jenkins-ci.org</id>
             <name>Jenkins Repository</name>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
 
