@@ -10,15 +10,21 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * @author Gregory Boissinot
  */
-public class XTriggerCause extends Cause {
+public class XTriggerCause extends Cause implements Serializable {
 
-    private static Logger LOGGER = Logger.getLogger(XTriggerCause.class.getName());
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3551026356358107079L;
+
+	private static Logger LOGGER = Logger.getLogger(XTriggerCause.class.getName());
 
     private String triggerName;
 

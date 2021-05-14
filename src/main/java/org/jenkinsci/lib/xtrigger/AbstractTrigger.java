@@ -213,7 +213,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
                     //TODO: Check whether the schedule() operation returns non-null future
                     List<Action> actions = new ArrayList<Action>(Arrays.asList(getScheduledXTriggerActions(null, log)));
-                    actions.add(new CauseAction(new XTriggerCause(triggerName, getCause(), true)));
+                    actions.add(new CauseAction(getBuildCause()));
                     hudson.model.Queue.getInstance().schedule(job, 0, actions);
                 } else {
                     log.info("No changes.");
@@ -296,10 +296,21 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     /**
      * Gets the trigger cause
      *
-     * @return the trigger cause
+     * @return the trigger cause text
      */
     protected abstract String getCause();
 
+    /**
+     * Get the build cause instance to set
+     * This method may be overridden by subclasses
+     * in order to add additional information
+     * to the cause
+     */
+    
+    protected XTriggerCause getBuildCause() {
+    	return new XTriggerCause(getName(), getCause(), true) ;
+    }
+    
     /**
      * Get the node where the polling need to be done
      * <p/>
