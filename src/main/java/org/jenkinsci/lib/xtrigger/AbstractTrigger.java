@@ -22,6 +22,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
+import jenkins.model.ParameterizedJobMixIn.ParameterizedJob;
 
 /**
  * @author Gregory Boissinot
@@ -124,7 +126,15 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     @Override
     public void run() {
-        Job project = (Job) job;
+        Job<?,?> project ;
+        try {
+        	// TODO: This is to allow things to continue working
+        	//       when multibranch projects are involved.  It needs to be fixed to
+        	//       work properly for them.
+            project = (Job)job ;
+        } catch ( Exception e ) {
+        	return ;
+        }
         XTriggerDescriptor descriptor = getDescriptor();
         ExecutorService executorService = descriptor.getExecutor();
         XTriggerLog log = null;
@@ -214,7 +224,15 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                     //TODO: Check whether the schedule() operation returns non-null future
                     List<Action> actions = new ArrayList<Action>(Arrays.asList(getScheduledXTriggerActions(null, log)));
                     actions.add(new CauseAction(getBuildCause()));
-                    hudson.model.Queue.getInstance().schedule(job, 0, actions);
+                   
+                    if( job instanceof ParameterizedJobMixIn.ParameterizedJob ) {
+                    	Action[] actionsArray = Arrays.copyOf( actions.toArray() , actions.size() , Action[].class );
+                    	for( Job<? , ?> pjob : ((ParameterizedJobMixIn.ParameterizedJob)job).getAllJobs() ) {
+                    		ParameterizedJobMixIn.scheduleBuild2(pjob , 0 , actionsArray ) ;
+                    	}
+                    } else {
+                    	hudson.model.Queue.getInstance().schedule2(job, 0, actions);
+                    }
                 } else {
                     log.info("No changes.");
                 }
