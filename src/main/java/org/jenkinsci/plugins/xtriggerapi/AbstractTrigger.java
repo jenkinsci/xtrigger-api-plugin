@@ -1,4 +1,4 @@
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import antlr.ANTLRException;
 import hudson.FilePath;
@@ -10,7 +10,7 @@ import hudson.util.StreamTaskListener;
 
 import org.apache.commons.io.FileUtils;
 import org.jenkinsci.lib.envinject.EnvInjectException;
-import org.jenkinsci.lib.envinject.service.EnvVarsResolver;
+import org.jenkinsci.plugins.envinjectapi.util.EnvVarsResolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,14 +23,13 @@ import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
-import jenkins.model.ParameterizedJobMixIn.ParameterizedJob;
 
 /**
  * @author Gregory Boissinot
  */
 public abstract class AbstractTrigger extends Trigger<BuildableItem> implements Serializable {
 
-    protected static Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
+    protected static final Logger LOGGER = Logger.getLogger(AbstractTrigger.class.getName());
 
     private String triggerLabel;
 
@@ -114,10 +113,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
     @Deprecated // as of 0.34.
     protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
-        EnvVarsResolver varsResolver = new EnvVarsResolver();
         Map<String, String> envVars;
         try {
-            envVars = varsResolver.getPollingEnvVars(project, node);
+            envVars = EnvVarsResolver.getPollingEnvVars(project, node);
         } catch (EnvInjectException envInjectException) {
             throw new XTriggerException(envInjectException);
         }
@@ -131,7 +129,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         	// TODO: This is to allow things to continue working
         	//       when multibranch projects are involved.  It needs to be fixed to
         	//       work properly for them.
-            project = (Job)job ;
+            project = (Job<?, ?>)job ;
         } catch ( Exception e ) {
         	return ;
         }
@@ -170,7 +168,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     /**
      * Asynchronous task
      */
-    private class Runner implements Runnable, Serializable {
+    private class Runner implements Runnable {
 
         private String triggerName;
 
@@ -188,8 +186,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
                 long start = System.currentTimeMillis();
                 log.info("Polling started on " + DateFormat.getDateTimeInstance().format(new Date(start)));
-                log.info("Polling for the job " + job.getName());
-
+                if( job != null ) {
+                	log.info("Polling for the job " + job.getName());
+                }
+                	
                 boolean changed;
 
                 if (requirePollingNode()) {
@@ -424,11 +424,14 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
         //Search for the last built on
         log.info("Looking for the last built on node.");
-        Node lastBuildOnNode = job.getLastBuiltOn();
-        if (lastBuildOnNode == null) {
-            return getPollingNodeNoPreviousBuild(log);
+        if( job != null ) {
+        	Node lastBuildOnNode = job.getLastBuiltOn();
+        	if (lastBuildOnNode == null) {
+        		return getPollingNodeNoPreviousBuild(log);
+        	}
+        	return Arrays.asList(lastBuildOnNode);
         }
-        return Arrays.asList(lastBuildOnNode);
+  		return getPollingNodeNoPreviousBuild(log);
     }
 
     private boolean eligibleNode(Node node) {
@@ -466,11 +469,13 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * Returns the label if any to poll
      */
     private Label getTargetLabel(XTriggerLog log) {
-        Label assignedLabel = job.getAssignedLabel();
-        if (assignedLabel != null) {
-            log.info(String.format("Trying to find an eligible node with the assigned project label %s.", assignedLabel));
-            return assignedLabel;
-        }
+    	if( job != null ) {
+	        Label assignedLabel = job.getAssignedLabel();
+	        if (assignedLabel != null) {
+	            log.info(String.format("Trying to find an eligible node with the assigned project label %s.", assignedLabel));
+	            return assignedLabel;
+	        }
+    	}
 
         return null;
     }

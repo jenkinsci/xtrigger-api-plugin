@@ -1,4 +1,4 @@
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import hudson.model.Item;
 import hudson.triggers.TriggerDescriptor;

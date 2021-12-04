@@ -1,8 +1,8 @@
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import hudson.console.HyperlinkNote;
-import hudson.model.AbstractBuild;
 import hudson.model.Cause;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import jenkins.security.MasterToSlaveCallable;
@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,18 +46,18 @@ public class XTriggerCause extends Cause implements Serializable {
     }
 
     @Override
-    public void onAddedTo(final AbstractBuild build) {
+    public void onAddedTo(final Run build) {
         final XTriggerCauseAction causeAction = build.getAction(XTriggerCauseAction.class);
         if (causeAction != null) {
             try {
-                Jenkins.getActiveInstance().getRootPath().act(new MasterToSlaveCallable<Void, XTriggerException>() {
+                Jenkins.get().getRootPath().act(new MasterToSlaveCallable<Void, XTriggerException>() {
                     @Override
                     public Void call() throws XTriggerException {
                         causeAction.setBuild(build);
                         File triggerLogFile = causeAction.getLogFile();
                         String logContent = causeAction.getLogMessage();
                         try {
-                            FileUtils.writeStringToFile(triggerLogFile, logContent);
+                            FileUtils.writeStringToFile(triggerLogFile, logContent, Charset.defaultCharset());
                         } catch (IOException ioe) {
                             throw new XTriggerException(ioe);
                         }

@@ -1,10 +1,13 @@
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import hudson.Util;
 import hudson.console.AnnotatedLargeText;
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
+import hudson.model.Run;
+
 import org.apache.commons.jelly.XMLOutput;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +24,7 @@ public class XTriggerCauseAction implements Action {
      * Set when the cause object is added to the build object
      * at job startup
      */
-    private AbstractBuild build;
+    private Run<?, ?> build;
 
     /**
      * Set on creation
@@ -48,7 +51,7 @@ public class XTriggerCauseAction implements Action {
     }
 
     @SuppressWarnings("unused")
-    public AbstractBuild getBuild() {
+    public Run<?, ?> getBuild() {
         return build;
     }
 
@@ -57,7 +60,7 @@ public class XTriggerCauseAction implements Action {
         return URL_NAME;
     }
 
-    public void setBuild(AbstractBuild build) {
+    public void setBuild(Run<?, ?> build) {
         this.build = build;
     }
 
@@ -90,6 +93,7 @@ public class XTriggerCauseAction implements Action {
     }
 
     @SuppressWarnings("unused")
+    @SuppressFBWarnings( "RV_RETURN_VALUE_IGNORED")
     public void writeLogTo(XMLOutput out) throws IOException {
         new AnnotatedLargeText<XTriggerCauseAction>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
     }

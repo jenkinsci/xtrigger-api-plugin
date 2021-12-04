@@ -1,4 +1,4 @@
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import java.io.Serializable;
 

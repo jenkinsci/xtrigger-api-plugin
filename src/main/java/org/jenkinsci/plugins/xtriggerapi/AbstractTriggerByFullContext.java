@@ -1,4 +1,4 @@
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import antlr.ANTLRException;
 import hudson.model.BuildableItem;
@@ -12,7 +12,7 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
 
     private transient C context;
 
-    private transient Object lock = new Object();
+    private final Object lock = new Object();
 
     /**
      * Builds a trigger object
@@ -53,9 +53,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
+//        if(lock==null){
+//            lock = new Object();
+//        }
         
         synchronized (lock) {
 
@@ -84,9 +84,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     protected boolean checkIfModified(XTriggerLog log) throws XTriggerException {
         
         // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
+//        if(lock==null){
+//            lock = new Object();
+//        }
         
         synchronized (lock) {
             C newContext = getContext(log);
@@ -105,9 +105,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     protected void setNewContext(C context) {
         
          // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
+//        if(lock==null){
+//            lock = new Object();
+//        }
         
         synchronized (lock) {
             this.context = context;
@@ -122,9 +122,9 @@ public abstract class AbstractTriggerByFullContext<C extends XTriggerContext> ex
     protected void resetOldContext(C oldContext) {
         
          // make sure the lock is not null; when de-serialising
-        if(lock==null){
-            lock = new Object();
-        }
+//        if(lock==null){
+//            lock = new Object();
+//        }
         
         synchronized (lock) {
             this.context = oldContext;
