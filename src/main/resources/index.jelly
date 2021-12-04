@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Plugin to provide the base trigger functionality required by FSTrigger, URLTrigger and others.
+</div>
