@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.jenkinsci.lib.xtrigger;
+package org.jenkinsci.plugins.xtriggerapi;
 
 import hudson.FilePath;
 import hudson.model.Action;
@@ -29,6 +29,11 @@ import hudson.model.Node;
 
 import java.io.File;
 import java.io.IOException;
+
+import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
+import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 
 import antlr.ANTLRException;
 
