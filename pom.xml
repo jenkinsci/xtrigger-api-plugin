@@ -3,18 +3,19 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>4.12</version>
-    </parent>
+	<parent>
+		<groupId>org.jenkins-ci.plugins</groupId>
+		<artifactId>plugin</artifactId>
+		<version>4.33</version>
+		<relativePath />
+	</parent>
 
-    <groupId>org.jenkins-ci.plugins</groupId>
-    <artifactId>xtrigger-api</artifactId>
-    <version>0.2-SNAPSHOT</version>
-    <packaging>hpi</packaging>
-    <name>Jenkins XTrigger API Plugin</name>
-    <url>https://github.com/jenkinsci/xtrigger-api-plugin</url>
+	<groupId>org.jenkins-ci.plugins</groupId>
+	<artifactId>xtrigger-api</artifactId>
+	<version>${revision}${changelist}</version>
+	<packaging>hpi</packaging>
+	<name>Jenkins XTrigger API Plugin</name>
+	<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
 
 	<licenses>
 		<license>
@@ -36,17 +37,19 @@
 	</developers>
 
 	<properties>
+		<revision>0.2</revision>
+		<changelist>-SNAPSHOT</changelist>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.level>8</java.level>
-        <jenkins.version>2.204.6</jenkins.version>
-        <findbugs.failOnError>false</findbugs.failOnError>
-		<envinject-api-plugin.version>1.8</envinject-api-plugin.version>
+		<java.level>8</java.level>
+		<gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
+		<jenkins.version>2.249.1</jenkins.version>
 	</properties>
 
 	<scm>
-		<connection>scm:git:git://github.com/jenkinsci/xtrigger-api-plugin.git</connection>
-		<developerConnection>scm:git:git@github.com:jenkinsci/xtrigger-api-plugin.git</developerConnection>
-		<tag>HEAD</tag>
+		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+		<url>https://github.com/${gitHubRepo}</url>
+		<tag>${scmTag}</tag>
 	</scm>
 
 	<distributionManagement>
@@ -64,8 +67,8 @@
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-				<artifactId>bom-2.204.x</artifactId>
-				<version>16</version>
+				<artifactId>bom-2.249.x</artifactId>
+				<version>984.vb5eaac999a7e</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -77,7 +80,14 @@
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>envinject-api</artifactId>
-			<version>${envinject-api-plugin.version}</version>
+			<version>1.8</version>
+			<exclusions>
+				<!-- Provided by Jenkins core -->
+				<exclusion>
+					<groupId>org.kohsuke.stapler</groupId>
+					<artifactId>stapler</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 	</dependencies>
