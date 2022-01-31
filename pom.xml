@@ -12,7 +12,7 @@
 
 	<groupId>org.jenkins-ci.plugins</groupId>
 	<artifactId>xtrigger-api</artifactId>
-	<version>0.2</version>
+	<version>${revision}${changelist}</version>
 	<packaging>hpi</packaging>
 	<name>Jenkins XTrigger API Plugin</name>
 	<url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
@@ -37,7 +37,7 @@
 	</developers>
 
 	<properties>
-		<revision>0.2</revision>
+		<revision>0.3</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.level>8</java.level>
@@ -49,7 +49,7 @@
 		<connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
 		<developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
 		<url>https://github.com/${gitHubRepo}</url>
-		<tag>xtrigger-api-0.2</tag>
+		<tag>${scmTag}</tag>
 	</scm>
 
 	<distributionManagement>
