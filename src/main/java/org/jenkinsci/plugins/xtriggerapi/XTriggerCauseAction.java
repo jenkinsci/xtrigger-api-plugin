@@ -85,7 +85,7 @@ public class XTriggerCauseAction implements Action {
         if (build == null) {
             return "XTrigger Log";
         }
-        XTriggerCause triggerCause = (XTriggerCause) build.getCause(XTriggerCause.class);
+        XTriggerCause triggerCause = build.getCause(XTriggerCause.class);
         if (triggerCause == null) {
             return "XTrigger Log";
         }
@@ -95,7 +95,7 @@ public class XTriggerCauseAction implements Action {
     @SuppressWarnings("unused")
     @SuppressFBWarnings( "RV_RETURN_VALUE_IGNORED")
     public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<XTriggerCauseAction>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+        new AnnotatedLargeText<>(getLogFile(), Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
     }
 
 }
