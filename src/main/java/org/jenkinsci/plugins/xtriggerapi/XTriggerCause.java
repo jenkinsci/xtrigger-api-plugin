@@ -64,12 +64,8 @@ public class XTriggerCause extends Cause implements Serializable {
                         return null;
                     }
                 });
-            } catch (IOException ioe) {
-                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", ioe);
-            } catch (InterruptedException ie) {
-                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", ie);
-            } catch (XTriggerException xe) {
-                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", xe);
+            } catch (IOException | InterruptedException | XTriggerException e) {
+                LOGGER.log(Level.SEVERE, "Problem to attach cause object to build object.", e);
             }
         }
     }
@@ -89,8 +85,8 @@ public class XTriggerCause extends Cause implements Serializable {
         if (causeFrom == null) {
             listener.getLogger().println("[" + triggerName + "]");
         } else {
-            listener.getLogger().println(String.format("[%s] %s (%s)", triggerName, causeFrom,
-                    HyperlinkNote.encodeTo("triggerCauseAction", "log")));
+            listener.getLogger().printf("[%s] %s (%s)%n", triggerName, causeFrom,
+                    HyperlinkNote.encodeTo("triggerCauseAction", "log"));
         }
     }
 

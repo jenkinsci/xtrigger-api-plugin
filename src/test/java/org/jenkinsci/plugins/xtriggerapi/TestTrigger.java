@@ -83,7 +83,7 @@ public class TestTrigger extends AbstractTrigger {
     }
 
     @Override
-    protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+    protected boolean checkIfModified(Node pollingNode, XTriggerLog log) {
         return triggered;
     }
 

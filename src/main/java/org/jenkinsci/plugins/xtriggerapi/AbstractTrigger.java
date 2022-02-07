@@ -112,7 +112,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     @Deprecated // as of 0.34.
-    protected String resolveEnvVars(String value, AbstractProject project, Node node) throws XTriggerException {
+    protected String resolveEnvVars(String value, AbstractProject<?, ?> project, Node node) throws XTriggerException {
         Map<String, String> envVars;
         try {
             envVars = EnvVarsResolver.getPollingEnvVars(project, node);
@@ -139,7 +139,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         try {
             StreamTaskListener listener = new StreamTaskListener(getLogFile());
             log = new XTriggerLog(listener);
-            if (Jenkins.getActiveInstance().isQuietingDown()) {
+            if (Jenkins.get().isQuietingDown()) {
                 log.info("Jenkins is quieting down.");
             } else if (!project.isBuildable()) {
                 log.info("The job is not buildable. Activate it to poll again.");
@@ -162,7 +162,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     protected abstract String getName();
 
     public XTriggerDescriptor getDescriptor() {
-        return (XTriggerDescriptor) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
+        return (XTriggerDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     /**
@@ -222,12 +222,12 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                     log.info("Changes found. Scheduling a build.");
 
                     //TODO: Check whether the schedule() operation returns non-null future
-                    List<Action> actions = new ArrayList<Action>(Arrays.asList(getScheduledXTriggerActions(null, log)));
+                    List<Action> actions = new ArrayList<>(Arrays.asList(getScheduledXTriggerActions(null, log)));
                     actions.add(new CauseAction(getBuildCause()));
                    
                     if( job instanceof ParameterizedJobMixIn.ParameterizedJob ) {
                     	Action[] actionsArray = Arrays.copyOf( actions.toArray() , actions.size() , Action[].class );
-                    	for( Job<? , ?> pjob : ((ParameterizedJobMixIn.ParameterizedJob)job).getAllJobs() ) {
+                    	for (Job<?, ?> pjob : job.getAllJobs()) {
                     		ParameterizedJobMixIn.scheduleBuild2(pjob , 0 , actionsArray ) ;
                     	}
                     } else {
@@ -236,8 +236,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 } else {
                     log.info("No changes.");
                 }
-            } catch (XTriggerException e) {
-                reportError(log, e);
             } catch (Throwable e) {
                 reportError(log, e);
             } finally {
@@ -254,7 +252,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
             Runner runner = (Runner) o;
 
-            if (triggerName != null ? !triggerName.equals(runner.triggerName) : runner.triggerName != null)
+            if (!Objects.equals(triggerName, runner.triggerName))
                 return false;
 
             return true;
@@ -283,9 +281,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         Action[] actions = getScheduledActions(pollingNode, log);
         int nbNewAction = actions.length + 1;
         Action[] newActions = new Action[nbNewAction];
-        for (int i = 0; i < actions.length; i++) {
-            newActions[i] = actions[i];
-        }
+        System.arraycopy(actions, 0, newActions, 0, actions.length);
         try {
             newActions[newActions.length - 1] = new XTriggerCauseAction(FileUtils.readFileToString(getLogFile()));
         } catch (IOException ioe) {
@@ -334,7 +330,6 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
      * <p/>
      * The returned node has a number of executor different of 0.
      *
-     * @param log
      * @return the node; null if there is no available node
      */
     private Node getPollingNode(XTriggerLog log) {
@@ -357,7 +352,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getPollingNodesWithExecutors(XTriggerLog log) {
-        List<Node> result = new ArrayList<Node>();
+        List<Node> result = new ArrayList<>();
         List<Node> nodes = getPollingNodeList(log);
         for (Node node : nodes) {
             if (node != null && eligibleNode(node)) {
@@ -382,7 +377,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         if (nodes == null || nodes.size() == 0) {
             log.info("Can't find any eligible slave nodes.");
             log.info("Trying to poll on master node.");
-            nodes = Arrays.asList(getMasterNode());
+            nodes = Collections.singletonList(getMasterNode());
         }
 
         return nodes;
@@ -396,10 +391,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
             if ("master".equalsIgnoreCase(triggerLabel)) {
                 log.info("Restrict on master label. Polling on master.");
-                return Arrays.asList(getMasterNode());
+                return Collections.singletonList(getMasterNode());
             }
 
-            Label targetLabel = Jenkins.getActiveInstance().getLabel(triggerLabel);
+            Label targetLabel = Jenkins.get().getLabel(triggerLabel);
             return getNodesLabel(job, targetLabel);
         }
 
@@ -415,10 +410,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
 
             if ("master".equalsIgnoreCase(triggerLabel)) {
                 log.info("Polling on master.");
-                return Arrays.asList(getMasterNode());
+                return Collections.singletonList(getMasterNode());
             }
 
-            Label targetLabel = Jenkins.getActiveInstance().getLabel(triggerLabel);
+            Label targetLabel = Jenkins.get().getLabel(triggerLabel);
             return getNodesLabel(job, targetLabel);
         }
 
@@ -429,7 +424,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         	if (lastBuildOnNode == null) {
         		return getPollingNodeNoPreviousBuild(log);
         	}
-        	return Arrays.asList(lastBuildOnNode);
+        	return Collections.singletonList(lastBuildOnNode);
         }
   		return getPollingNodeNoPreviousBuild(log);
     }
@@ -461,7 +456,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
         if (targetLabel != null) {
             return getNodesLabel(job, targetLabel);
         } else {
-            return Jenkins.getInstance().getNodes();
+            return Jenkins.get().getNodes();
         }
     }
 
@@ -481,7 +476,7 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private Node getMasterNode() {
-        Computer computer = Jenkins.getActiveInstance().toComputer();
+        Computer computer = Jenkins.get().toComputer();
         if (computer != null) {
             return computer.getNode();
         } else {
@@ -490,8 +485,8 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
     }
 
     private List<Node> getNodesLabel(BuildableItem buildable, Label label) {
-        List<Node> result = new ArrayList<Node>();
-        List<Node> remainingNodes = new ArrayList<Node>();
+        List<Node> result = new ArrayList<>();
+        List<Node> remainingNodes = new ArrayList<>();
 
         Set<Node> nodes = label.getNodes();
         for (Node node : nodes) {

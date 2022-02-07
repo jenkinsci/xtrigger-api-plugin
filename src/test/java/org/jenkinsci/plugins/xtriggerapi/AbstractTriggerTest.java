@@ -47,6 +47,6 @@ public class AbstractTriggerTest {
 
         Thread.sleep(60000);
 
-        assertTrue(p.getBuilds().size() > 0);
+        assertTrue(p.getBuilds().stream().count() > 0);
     }
 }
