@@ -42,7 +42,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.level>8</java.level>
 		<gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-		<jenkins.version>2.319.3</jenkins.version>
+		<jenkins.version>2.332.1</jenkins.version>
 	</properties>
 
 	<scm>
@@ -67,7 +67,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
-				<artifactId>bom-2.319.x</artifactId>
+				<artifactId>bom-2.332.x</artifactId>
 				<version>1289.v5c4b_1c43511b_</version>
 				<scope>import</scope>
 				<type>pom</type>
