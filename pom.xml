@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.40</version>
+		<version>4.49</version>
 		<relativePath />
 	</parent>
 
@@ -40,7 +40,6 @@
 		<revision>0.5</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.level>8</java.level>
 		<gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
 		<jenkins.version>2.332.1</jenkins.version>
 	</properties>
