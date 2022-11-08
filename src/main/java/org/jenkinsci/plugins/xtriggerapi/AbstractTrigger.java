@@ -394,8 +394,10 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
                 return Collections.singletonList(getMasterNode());
             }
 
-            Label targetLabel = Jenkins.get().getLabel(triggerLabel);
-            return getNodesLabel(job, targetLabel);
+           	Label targetLabel = Jenkins.get().getLabel(triggerLabel);
+            if( targetLabel != null ) {
+            	return getNodesLabel(job, targetLabel);
+            }
         }
 
         return candidatePollingNode(log);
@@ -414,7 +416,9 @@ public abstract class AbstractTrigger extends Trigger<BuildableItem> implements 
             }
 
             Label targetLabel = Jenkins.get().getLabel(triggerLabel);
-            return getNodesLabel(job, targetLabel);
+            if( targetLabel != null  ) {
+            	return getNodesLabel(job, targetLabel);
+            }
         }
 
         //Search for the last built on
