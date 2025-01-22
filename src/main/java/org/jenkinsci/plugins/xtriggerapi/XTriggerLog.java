@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.xtriggerapi;
 
 import hudson.util.StreamTaskListener;
+import hudson.model.TaskListener;
 
 import java.io.Serializable;
 
@@ -9,13 +10,13 @@ import java.io.Serializable;
  */
 public class XTriggerLog implements Serializable {
 
-    private StreamTaskListener listener;
+    private TaskListener listener;
 
-    public XTriggerLog(StreamTaskListener listener) {
+    public XTriggerLog(TaskListener listener) {
         this.listener = listener;
     }
 
-    public StreamTaskListener getListener() {
+    public TaskListener getListener() {
         return listener;
     }
 
@@ -32,8 +33,8 @@ public class XTriggerLog implements Serializable {
     }
 
     public void closeQuietly() {
-        if (listener != null) {
-            listener.closeQuietly();
+        if (listener != null && listener instanceof StreamTaskListener ) {
+            ((StreamTaskListener)listener).closeQuietly();
         }
     }
 }
