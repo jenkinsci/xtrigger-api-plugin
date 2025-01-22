@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>4.50</version>
+		<version>5.5</version>
 		<relativePath />
 	</parent>
 
@@ -39,12 +39,10 @@
 	<properties>
 		<revision>1.1</revision>
 		<changelist>-SNAPSHOT</changelist>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
 		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-		<jenkins.baseline>2.361</jenkins.baseline>
-		<jenkins.version>${jenkins.baseline}.3</jenkins.version>
-		<plugin.minimumJavaVersion>11</plugin.minimumJavaVersion>
+		<jenkins.baseline>2.479</jenkins.baseline>
+		<jenkins.version>${jenkins.baseline}.1</jenkins.version>
 	</properties>
 
 	<scm>
@@ -70,7 +68,7 @@
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
 				<artifactId>bom-${jenkins.baseline}.x</artifactId>
-				<version>1678.vc1feb_6a_3c0f1</version>
+				<version>3850.vb_c5319efa_e29</version>
 				<scope>import</scope>
 				<type>pom</type>
 			</dependency>
@@ -82,7 +80,7 @@
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
 			<artifactId>envinject-api</artifactId>
-			<version>1.199.v3ce31253ed13</version>
+			<version>1.235.va_14c74f8f487</version>
 			<exclusions>
 				<!-- Provided by Jenkins core -->
 				<exclusion>
