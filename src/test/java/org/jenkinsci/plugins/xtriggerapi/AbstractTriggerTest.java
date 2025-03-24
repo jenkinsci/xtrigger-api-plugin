@@ -23,18 +23,19 @@
  */
 package org.jenkinsci.plugins.xtriggerapi;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import hudson.model.FreeStyleProject;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class AbstractTriggerTest {
-    @Rule public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class AbstractTriggerTest {
 
     @Test
-    public void doNotSkipPollingWhenNoLabelSpecified() throws Exception {
+    void doNotSkipPollingWhenNoLabelSpecified(JenkinsRule j) throws Exception {
         j.jenkins.setNumExecutors(0);
         j.createOnlineSlave();
 
