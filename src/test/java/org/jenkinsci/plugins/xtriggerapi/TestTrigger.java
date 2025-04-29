@@ -23,38 +23,33 @@
  */
 package org.jenkinsci.plugins.xtriggerapi;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.FilePath;
 import hudson.model.Action;
 import hudson.model.Node;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
-import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
-import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
-import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
-
-import antlr.ANTLRException;
-
+import java.io.Serial;
 /**
  * Explicit trigger for testing purposes.
  *
  * @author ogondza
  */
 public class TestTrigger extends AbstractTrigger {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final File log;
     private volatile boolean triggered = false;
 
-    public TestTrigger() throws ANTLRException {
+    public TestTrigger() throws IllegalArgumentException {
         super("* * * * *");
         try {
             log = File.createTempFile("xtrigger", "test");
             log.deleteOnExit();
         } catch (IOException ex) {
-            throw new AssertionError(ex);
+            throw new IllegalArgumentException(ex);
         }
     }
 
@@ -103,6 +98,7 @@ public class TestTrigger extends AbstractTrigger {
 
     private static final Descriptor DESCRIPTOR = new Descriptor();
     public static final class Descriptor extends XTriggerDescriptor {
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Explicit trigger for tests";
